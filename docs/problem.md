@@ -1,5 +1,13 @@
 # Problem Log
 
+## 2026-10-26 - System Dependency Security Updates
+
+- Issue: targeted OpenSSL, SQLite, and CA certificate security updates could not be installed automatically.
+- Cause: sudo requires the user's interactive password. Fresh Fedora metadata also encountered a mirror TLS error; cached advisories were available.
+- Attempts: one metadata refresh, one cached advisory check, and one non-interactive targeted upgrade. The upgrade stopped before changing packages.
+- Resolution: source fixes and private publication completed; the exact manual upgrade command and advisory IDs are recorded in `security_audit.md`.
+- Timing: observed across the security audit; precise elapsed time was not recorded.
+
 This file records non-trivial problems encountered while completing plans, tests, and tasks.
 
 ## Entry Format

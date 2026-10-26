@@ -33,6 +33,16 @@ otherwise; they are not stored in SQLite.
 - Common credential-pattern scan of publishable source files: no matches.
 - Translation XML and shell syntax validation.
 - Mock Codex tests do not contact OpenAI or consume paid model requests.
+- The unpacked x64 release starts successfully with an isolated configuration;
+  its newly created database has Unix mode `600`.
+
+## Private Publication
+
+Source and documentation were uploaded to
+https://github.com/Leos-byte/MemoryGraph on branch `main`, initially at commit
+`4494290`. GitHub API verified `private: true` and `visibility: private`.
+Local release binaries, backups, databases, credentials, and environment files
+were excluded. The staged source credential-pattern scan had no matches.
 
 ## System Dependencies: Updates Required
 

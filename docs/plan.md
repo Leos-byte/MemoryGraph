@@ -2,13 +2,16 @@
 
 ## 2026-10-26 Security And Private GitHub Publication
 
-Status: Source fixes implemented; final validation and publication in progress
+Status: Source fixes verified and published privately; system security updates await the user's sudo password
 
 - [x] Review network, credentials, rendering, subprocess, storage, and publication boundaries.
 - [x] Fix confirmed source issues and add security regression tests.
 - [x] Inspect dependency advisories; system updates require the user's sudo password.
-- [ ] Complete final build, tests, and x64 packages.
-- [ ] Publish reviewed source to a private GitHub repository and verify visibility.
+- [x] Complete final build, tests, and x64 packages.
+- [x] Publish reviewed source to a private GitHub repository and verify visibility.
+
+Repository: https://github.com/Leos-byte/MemoryGraph (`private: true`).
+Initial source/security commit: `4494290`.
 
 ## 2026-08-27 Menu simplification
 
