@@ -1,0 +1,35 @@
+# Build outputs
+Source/build/
+build/
+
+# Local package artifacts
+Releases/*.tar.gz
+Releases/*.run
+Backup/*/
+Backup/*.tar.gz
+
+# Runtime data
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite*
+*.db-*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+auth.json
+.aws/
+.codex
+.agents/
+Releases/*
+Backup/*
+!Releases/.gitkeep
+!Backup/.gitkeep
+
+# Editor and OS files
+*.swp
+*~
+.DS_Store
+
