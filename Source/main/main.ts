@@ -15,7 +15,8 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'memgraph', privileges: { standa
 app.setName('MemGraph');
 if (process.platform !== 'win32') process.umask(0o077);
 const testMode = !app.isPackaged && process.env.MEMGRAPH_TEST_MODE === '1';
-const root = testMode && process.env.MEMGRAPH_TEST_ROOT ? resolve(process.env.MEMGRAPH_TEST_ROOT) : join(app.getPath('appData'), 'MemGraphElectron');
+const explicitProfile = app.commandLine.getSwitchValue('user-data-dir');
+const root = testMode && process.env.MEMGRAPH_TEST_ROOT ? resolve(process.env.MEMGRAPH_TEST_ROOT) : explicitProfile ? resolve(explicitProfile) : join(app.getPath('appData'), 'MemGraphElectron');
 app.setPath('userData', root);
 let window: BrowserWindow;
 let config: Config;

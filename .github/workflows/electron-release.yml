@@ -89,6 +89,8 @@ jobs:
         if: runner.os == 'Windows'
         run: npm run test:e2e
       - run: npm run package:dir -- --publish never
+      - name: Verify packaged app with an isolated data profile
+        run: npm run smoke:package
       - run: npm run package -- --publish never
       - name: Collect release artifacts
         run: node ../DevScripts/release-artifacts.mjs stage --platform "$PLATFORM" --source dist-release --out ../artifact-stage --version "$VERSION"

@@ -65,6 +65,8 @@ jobs:
         run: npm run test:e2e
       - name: Build unpacked app
         run: npm run package:dir -- --publish never
+      - name: Verify packaged app with an isolated data profile
+        run: npm run smoke:package
       - name: Build packages without publishing
         run: npm run package -- --publish never
       - name: Collect packages and preserve unpacked file modes
