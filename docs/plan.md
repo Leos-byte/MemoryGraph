@@ -1,5 +1,20 @@
 # Project Plan
 
+## Electron Migration - 0.2.0-beta.1
+
+Status: Implemented locally; final package verification and hosted CI in progress
+
+- [x] Freeze Qt source/release and preserve a private SQLite snapshot.
+- [x] Migrate core learning, templates, providers, Markdown and recycle bin.
+- [x] Implement restricted IPC, safe credentials and consistent database import.
+- [x] Add browser GitHub feedback and mailto email feedback.
+- [x] Add unit, migration, updater, release-tool and real Electron UI tests.
+- [x] Implement Windows/Linux packaging and guarded draft release workflows.
+- [ ] Verify final Linux package and retain unpacked manual-test build.
+- [ ] Public repository review, source push and hosted Windows/Linux CI.
+- [ ] Validate draft release artifacts; owner approval still required to publish.
+- [ ] Record actual installed Windows/Linux N-to-N+1 upgrade evidence before promoting stable.
+
 ## 2026-10-26 Security And Private GitHub Publication
 
 Status: Source fixes verified and published privately; system security updates await the user's sudo password

@@ -1,5 +1,14 @@
 # Version History
 
+## 0.2.0-beta.1 - Electron Migration
+
+- Replace Qt UI with Electron + React + TypeScript and React Flow, preserving graph learning behavior and existing SQLite data.
+- Freeze Qt at qt-v0.1.0-frozen with local source/release/database backups.
+- Add safe legacy import, owner-only storage, bounded model requests, cancellation and restricted preload APIs.
+- Add browser-based GitHub Issue feedback and default-client email feedback without account or backend requirements.
+- Add Windows/Linux x64 CI, NSIS/ZIP and AppImage/tar builds, signed update manifests, separate stable/beta channels and manual draft releases.
+- Add backend, migration, updater, release-tool and Electron end-to-end regression tests.
+
 ## 2026-10-26 - Security hardening
 
 - Require HTTPS API endpoints, block redirects, clear keys when changing API origins, and redact keys from API errors.

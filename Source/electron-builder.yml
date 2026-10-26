@@ -1,0 +1,46 @@
+appId: com.memgraph.desktop
+productName: MemGraph
+copyright: Copyright (c) 2026 Leos-byte
+directories:
+  output: dist-release
+  buildResources: assets
+icon: assets/icon.png
+files:
+  - dist-main/**
+  - dist-renderer/**
+  - package.json
+extraResources:
+  - update-public-key.pem
+asar: true
+asarUnpack:
+  - node_modules/better-sqlite3/**
+publish:
+  provider: github
+  owner: Leos-byte
+  repo: MemoryGraph
+  releaseType: prerelease
+win:
+  icon: assets/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  artifactName: MemGraph-${version}-windows-${arch}.${ext}
+  verifyUpdateCodeSignature: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  artifactName: MemGraph-${version}-windows-${arch}-setup.${ext}
+linux:
+  icon: assets/icon.png
+  syncDesktopName: true
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: tar.gz
+      arch: [x64]
+  category: Education
+  artifactName: MemGraph-${version}-linux-${arch}.${ext}

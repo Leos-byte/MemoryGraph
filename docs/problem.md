@@ -1,5 +1,12 @@
 # Problem Log
 
+## 2026-10-26 - Electron Migration Validation
+
+- Native dependencies: Electron 45's npm package did not automatically install its binary. One explicit official install.js run resolved it; root postinstall now includes that downloader and electron-builder native dependency preparation.
+- Rendering: Linux desktop/GPU screenshot attempts produced blank captures or stalled frame-stability checks. Two display configurations were tried; isolated Ozone headless tests with background throttling disabled in test mode produced working screenshots. Production retains the sandbox and ordinary display settings.
+- Packaging: AppImage names use x86_64 while tar names use x64; staging accepts both. Electron-builder emitted latest metadata for the beta without an explicit channel, so the package wrapper now derives the channel from the package version.
+- Elapsed: investigated during the migration; no precise per-attempt timing was recorded. The regression tests and wrappers preserve these fixes for future runs.
+
 ## 2026-10-26 - System Dependency Security Updates
 
 - Issue: targeted OpenSSL, SQLite, and CA certificate security updates could not be installed automatically.

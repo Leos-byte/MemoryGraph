@@ -1,5 +1,13 @@
 # Conversation History
 
+## 2026-10-26 - Electron Migration
+
+User: "Implement the plan."
+
+Agreed: Electron + React + TypeScript, Windows/Linux x64, old SQLite compatibility,
+GitHub browser feedback and mailto to leo.oceanai@gmail.com, public repository,
+MIT, installer/AppImage updates, unsigned initial Windows beta, local user-directed Codex repairs.
+
 ## 2026-10-26 - Security And GitHub
 
 User: "检查并修复当前项目有没有安全漏洞，最后顺便上传到github并设置为隐私项目"

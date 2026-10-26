@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Email / 邮件联系
+    url: mailto:leo.oceanai@gmail.com
+    about: Contact the maintainer without posting a public issue; redact private data. / 不公开提交问题时可邮件联系维护者；请先脱敏。
+  - name: Releases and known versions / 发布与版本
+    url: https://github.com/Leos-byte/MemoryGraph/releases
+    about: Check the version before reporting. / 报告前请确认版本。

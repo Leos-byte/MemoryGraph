@@ -1,0 +1,11 @@
+import { generateKeyPairSync } from 'node:crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+const privatePath = resolve('../Backup/update-signing-private.pem');
+const publicPath = resolve('update-public-key.pem');
+if (existsSync(privatePath) || existsSync(publicPath)) throw new Error('Signing key already exists; never overwrite a deployed key.');
+const keys = generateKeyPairSync('ed25519', { publicKeyEncoding: { type: 'spki', format: 'pem' }, privateKeyEncoding: { type: 'pkcs8', format: 'pem' } });
+mkdirSync(dirname(privatePath), { recursive: true, mode: 0o700 });
+writeFileSync(privatePath, keys.privateKey, { mode: 0o600 });
+writeFileSync(publicPath, keys.publicKey, { mode: 0o644 });
+console.log('Public update key generated; private key saved only under ignored Backup.');
