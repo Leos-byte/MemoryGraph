@@ -1,5 +1,40 @@
 # Problem Log
 
+## 2026-10-27 - Login Already Running
+
+- User report: "Error invoking remote method 'memgraph:command': Error: Login is already running."
+- Cause: the login IPC returned immediately after starting the child process, but Settings interpreted that acknowledgement as completion, re-enabled the login button and immediately queried status. The still-running backend rejected the next click. There was no cancel/resume UI, and cumulative process output was appended repeatedly.
+- Fix: an application-owned LoginSession with idempotent start, revisioned progress, state recovery, cancellation, timeout, identity checks and process termination fallback. The UI follows actual session state and only automatically checks credentials after successful completion.
+- Attempts: one implementation and local regression cycle; typecheck caught an additional global text-based login listener, which was updated to consume typed state. No real login was attempted.
+- Result: 56 unit tests and seven Electron UI scenarios passed, including concurrent calls, Settings reopen, cancel/retry, timeout, stale completion, localization, and independent model-error notifications. Final package/hosted checks are recorded in the test evidence.
+- Elapsed: precise wall-clock time was not recorded.
+- Prevention: test IPC acknowledgement separately from asynchronous operation completion, and keep long-lived operation state outside transient dialogs.
+
+## 2026-10-27 - Standalone Release Verification Import Cycle
+
+- Issue: checking the downloaded, signed cross-platform packages through `release-artifacts.mjs check-signed` exited with code 13 and an unsettled top-level await.
+- Cause: the CLI dynamically imported the verifier while the verifier statically imported the same CLI module. Existing in-process tests imported the modules in a different order and missed this entry-point cycle.
+- Fix: move shared package validators to `release-package-files.mjs`, removing the cycle. Keep the CLI awaited and add a fresh-process regression covering both valid packages and same-size tampering.
+- Attempts: confirmed the CLI failure; an entry-point-only change was insufficient, so the dependency cycle was removed. The local sandbox also blocked spawned test processes with EPERM; the complete tests were rerun with permission to execute child processes.
+- Result: actual seven-asset release signature/hash validation passed; the standalone regression passed outside the restricted sandbox. Hosted regression validation follows in the migration PR.
+- Elapsed: precise time was not recorded.
+- Prevention: execute command entry points in subprocess tests, assert process errors as well as exit codes, and retain real cross-platform artifact validation before publication.
+
+## 2026-10-27 - Windows Artifact Archiving
+
+- Issue: the first Windows CI run passed 46/47 release-tool checks but failed while invoking tar on an absolute drive-letter archive path.
+- Cause: Git Bash's GNU tar can interpret a colon in a Windows archive path as a remote-host separator.
+- Fix: select Windows' System32/tar.exe explicitly and write a relative archive filename from the output directory; retain normal tar on Linux.
+- Attempts: one hosted failure, one source correction, and local regression validation before rerunning CI. Both Windows and Linux then passed run `40432043548`, including archive collection. The existing archive test runs on both hosted platforms to prevent recurrence.
+- Elapsed: precise time was not recorded.
+
+## 2026-10-26 - Electron Migration Validation
+
+- Native dependencies: Electron 45's npm package did not automatically install its binary. One explicit official install.js run resolved it; root postinstall now includes that downloader and electron-builder native dependency preparation.
+- Rendering: Linux desktop/GPU screenshot attempts produced blank captures or stalled frame-stability checks. Two display configurations were tried; isolated Ozone headless tests with background throttling disabled in test mode produced working screenshots. Production retains the sandbox and ordinary display settings.
+- Packaging: AppImage names use x86_64 while tar names use x64; staging accepts both. Electron-builder emitted latest metadata for the beta without an explicit channel, so the package wrapper now derives the channel from the package version.
+- Elapsed: investigated during the migration; no precise per-attempt timing was recorded. The regression tests and wrappers preserve these fixes for future runs.
+
 ## 2026-10-26 - System Dependency Security Updates
 
 - Issue: targeted OpenSSL, SQLite, and CA certificate security updates could not be installed automatically.

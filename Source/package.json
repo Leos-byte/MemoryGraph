@@ -1,0 +1,51 @@
+{
+  "name": "memgraph",
+  "version": "0.2.0-beta.2",
+  "description": "MemGraph knowledge learning workspace",
+  "author": "Leos-byte",
+  "desktopName": "memgraph.desktop",
+  "license": "MIT",
+  "engines": { "node": ">=22.12.0 <23", "npm": ">=10" },
+  "private": true,
+  "type": "module",
+  "main": "dist-main/main.cjs",
+  "scripts": {
+    "dev": "npm run build && electron .",
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs",
+    "test:e2e": "playwright test",
+    "verify": "npm run typecheck && npm run test && npm run build && npm run test:e2e",
+    "package": "node scripts/package.mjs",
+    "package:dir": "node scripts/package.mjs --dir",
+    "smoke:package": "node scripts/smoke-package.mjs",
+    "release:sign": "node scripts/sign-release.mjs",
+    "postinstall": "node node_modules/electron/install.js && electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.12.0",
+    "better-sqlite3": "13.0.3",
+    "electron-updater": "6.8.11",
+    "lucide-react": "1.61.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

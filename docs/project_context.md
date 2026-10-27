@@ -1,55 +1,34 @@
 # Project Context
 
-Security update (2026-10-26): HTTPS-only APIs, cleared keys on API-origin changes,
-restricted Markdown resources/links, limited Codex tools and runtime, canceled
-requests before database changes, owner-only database files, single-pass template
-expansion. See `security_audit.md` for tests and pending OS security updates.
+MemGraph helps users understand, connect, remember, and transfer knowledge through local concept graphs and Markdown explanations.
 
-MemGraph is a local desktop knowledge-learning application.
+## Active Architecture
 
-## Product Definition
+- Electron 45, React 19, TypeScript; npm packages pinned by Source/package-lock.json.
+- Source/main owns SQLite, credentials, model requests, files, feedback URLs, and updates. Source/renderer is sandboxed React/React Flow; Source/shared/types.ts defines the restricted preload bridge.
+- Preserve legacy SQLite schema, string-encoded IDs, parent links, default/custom templates, recycle-bin state, and generation history.
+- Qt v0.1.0 frozen at git tag qt-v0.1.0-frozen; source/release archives and SQLite snapshot are local under Backup. Do not reintroduce draw.io integration.
+- Windows x64 NSIS+ZIP, Linux x64 AppImage+tar.gz. x86 remains paused.
+- SQLite and settings remain local. API keys use secure OS storage, memory-only if unavailable; never return keys to renderer or store in SQLite.
+- ChatGPT authentication belongs to installed official Codex CLI. MemGraph must not read or copy Codex credentials. Windows CLI launch avoids shell string concatenation.
+- LoginSession owns a revisioned in-memory login state; start is idempotent while running. Settings restores that state, exposes cancellation and follows completion/timeout events instead of treating the launch IPC return as login completion. Fake CLI UI tests never authorize a real account.
 
-Name: **MemGraph：符合大脑记忆规律的知识学习工具**
+## Product Rules
 
-The product helps users understand, connect, remember, and transfer knowledge by creating a visual graph of concepts. Users enter a concept, generate a Markdown explanation, select unfamiliar text, and expand it into a connected node.
+- Map rename/delete/export belong only in map context menus. Recycle bin belongs in File. Secondary node actions belong in More.
+- Selection creates a linked child, generation off by default. Generating an existing concept reuses its node and edges.
+- AI relation descriptions are appended to the source explanation, never used as edge labels.
+- Chinese/English UI; template help follows the selected language.
+- GitHub feedback opens the prefilled Issue page in a browser; email opens the default client addressed to leo.oceanai@gmail.com. No OAuth tokens, feedback server, or automatic data upload.
+- Local Codex issue processing is user-directed; no unattended self-hosted runner or automatic merge.
 
-## v0.1.0 Decisions
+## Release Rules
 
-- Desktop app.
-- Qt/C++ with CMake.
-- Linux x64 and Linux x86 targets.
-- SQLite local storage.
-- Provider-aware OpenAI and DeepSeek model presets. OpenAI options mirror the current visible Codex selector: GPT-5.6 Sol, Terra, Luna, GPT-5.5, GPT-5.4, and GPT-5.4 Mini.
-- Map rename, Markdown export, and deletion are available only from a map item's context menu; Recycle Bin is available only from File; secondary node actions are consolidated under More.
-- API Key authentication and ChatGPT login through the official Codex CLI.
-- Full Prompt template editing.
-- Graph-first interface.
-- Markdown copy and export.
-- Chinese and English UI.
-- Qt Widgets Fusion-based design system with semantic light/dark tokens and 12 pt desktop body text.
-
-## Current Direction
-
-- Active development is the Qt/C++ implementation.
-- The draw.io/Electron integration experiment was rolled back on 2026-05-01 by user request.
-- Do not continue draw.io integration work unless the user explicitly reopens that direction.
-- The archived draw.io work is stored under `Backup/20260501-drawio-integration-archived` for reference only.
-
-## Out Of Scope For v0.1.0
-
-- Spaced repetition.
-- Image explanation generation.
-- Cloud sync.
-- Account system.
-- Additional providers beyond OpenAI and DeepSeek.
-
-## Important Implementation Notes
-
-- Do not store API keys in SQLite, logs, Markdown exports, or backups.
-- Prefer local, inspectable project files and scripts.
-- On Linux, API keys use Secret Service via `secret-tool` when available.
-- If the secret backend is unavailable, API keys are kept for the current app session only.
-- ChatGPT credentials are owned by the official Codex CLI; MemGraph must never read or store them.
-- ChatGPT login is only valid for OpenAI models. DeepSeek uses API Key authentication.
-- Build scripts should detect missing dependencies and print clear install instructions.
-- UI changes should follow `docs/ui_audit.md`: preserve visible keyboard focus, semantic action states, localization expansion, and graph readability.
+- Repository: Leos-byte/MemoryGraph, public with MIT license after publication review.
+- Current target version 0.2.0-beta.2 (login lifecycle fix). Manual releases first create drafts; owner confirms publication.
+- Migration branch `migration/electron`, PR #1 awaits owner review/merge. Windows Server 2022 and Ubuntu 22.04 CI run `40432043548` passed tests, packaged startup, and both target formats at `8654609`. No Electron release has been published and no installed N-to-N+1 update has been verified.
+- Windows installer/Linux AppImage auto-update; ZIP/tar users download a newer package. Stable and beta channels are separate.
+- Signed manifests bind version/channel/file hashes. Private update key only in ignored Backup and GitHub SIGNING_PRIVATE_KEY secret; public key ships with app.
+- First Windows builds are unsigned publishers; independent update signatures still required.
+- npm run verify covers types, unit/backend and actual Electron UI flows. Release-tool tests: node --test DevScripts/tests/*.test.mjs.
+- Do not claim Windows, clean-system, real provider or installed N-to-N+1 upgrade validation without recorded evidence. See docs/acceptance.md and docs/electron_release.md.

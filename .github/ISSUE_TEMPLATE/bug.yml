@@ -1,0 +1,78 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible MemGraph problem / 报告可复现的问题
+title: '[Bug]: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a public issue. Do not include API keys, tokens, private graphs, databases, or raw logs.
+        这是公开的问题报告。请勿包含 API 密钥、令牌、私人图谱、数据库或原始日志。
+  - type: input
+    id: version
+    attributes:
+      label: Version / 版本
+      placeholder: 0.2.0-beta.1
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system / 操作系统
+      options:
+        - Windows x64
+        - Linux x64
+        - Other / 其他
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version and package / 系统版本与安装包
+      placeholder: Windows 11, NSIS / Fedora 43, AppImage
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: App-provided report (optional) / 应用预填报告（可选）
+      description: Review and remove private content before submitting. / 提交前请检查并移除隐私内容。
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      description: Use synthetic, non-private content. / 请使用虚构的非隐私内容。
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / 实际行为
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact email (optional, public) / 联系邮箱（可选，公开）
+      description: Leave blank to use GitHub replies. Never post a private email address without consent. / 可留空并通过 GitHub 回复；未经同意请勿公开私人邮箱。
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence (optional) / 脱敏佐证（可选）
+      description: A cropped screenshot or short redacted error is sufficient. Logs are not required. / 可提供裁剪截图或简短脱敏错误；不要求日志。
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy / 隐私
+      options:
+        - label: I removed secrets and private content. / 我已移除密钥与隐私内容。
+          required: true

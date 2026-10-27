@@ -1,144 +1,69 @@
-# MemGraph Usage
+# MemGraph 使用说明
 
-## Start
+## 安装与运行
 
-1. Run MemGraph.
-2. Open Settings.
-3. Choose API Key or ChatGPT Login, select a model, and set the preferred UI language.
-4. Create a knowledge map.
-5. Enter a concept in the right panel.
-6. Click Generate.
+从 GitHub Releases 选择 Windows x64 安装版或 ZIP、Linux x64 AppImage 或 tar.gz。首批 Windows 测试版没有发布者代码签名，可能出现系统提示。
 
-## Expand A Concept
+Linux AppImage 需有可执行权限及系统支持的 FUSE 环境。也可解压 tar.gz 后运行 `memgraph`。解压包保留人工测试用途；开发构建需要 Node.js 22 x64。
 
-1. Select a node on the graph.
-2. Select unfamiliar text in the Markdown explanation panel.
-3. Right-click and choose "Create linked node from selection".
-4. By default, MemGraph creates a linked child node without calling the model. Edit the node manually, or turn on automatic linked-node generation in Settings if you want this action to generate immediately.
+## 从 Qt 迁移
 
-## Graph Canvas
+首次启动检测旧版默认数据库和旧配置中的自定义目录，经确认后导入。也可使用“文件 > 导入旧版数据库”手动选择文件。
 
-- Right-click blank canvas space and choose New Node Here to create a node at that position.
-- Right-click blank canvas space and choose Fit Map to frame the current knowledge graph.
-- The new-node dialog lets you choose whether to generate an explanation immediately.
-- Hold and drag the right mouse button to pan the canvas when the map grows large.
-- Right-click a node and choose Delete Node to move it to deleted nodes.
-- Select a node and press Delete to move it to Recycle Bin.
-- Use the mouse wheel to zoom. Zoom limits keep nodes usable at extreme scales.
+导入使用 SQLite 一致性备份复制数据，原数据库保留；覆盖当前 Electron 数据前会建立恢复快照。地图、节点、连线、模板、回收站和历史记录保留。建议退出旧版后再导入，导入后两份数据库不会自动同步。
 
-## Interface Shortcuts
+普通模型及语言设置随检测到的旧配置迁入。API Key 不复制，需在设置中重新输入；ChatGPT 身份继续由官方 Codex CLI 管理。
 
-- `Ctrl+N`: create a new map.
-- `Ctrl+Return`: generate the concept entered in the explanation panel.
-- `Ctrl+,`: open Settings.
-- `Ctrl+S`: save the current template in Template Manager.
-- Node actions including copy, edit, connect, relation update, delete, and restore are available from the More menu beside Node Markdown.
+## 学习流程
 
-## Templates
+1. 新建地图，输入概念，选择解释模板并生成。
+2. 选中节点查看 Markdown；选中陌生文字、右键创建关联节点。
+3. 关联节点默认不自动生成，可在创建时选择，或稍后点击生成。
+4. 选中已有节点并生成会更新原节点，保留连线。
+5. 更多菜单支持复制、编辑、连接、生成关系和删除；关系说明写在源节点解释末尾。
 
-Open Template Manager to create, copy, edit, delete, and set default explanation templates.
+图谱支持拖动节点、右键拖动画布、缩放、适应视图以及空白处右键建点。选中节点按 Delete 会请求确认。
 
-Use the `?` button in the template editor for an in-app explanation of System Prompt, User Prompt, required fields, supported variables, and template writing tips.
+地图的重命名、导出和删除位于地图列表右键菜单；节点操作集中到“更多”。回收站仅位于文件菜单，支持地图、节点、模板恢复及清空。
 
-Required template fields:
+## 模型与模板
 
-- Name.
-- System Prompt.
-- User Prompt.
-- `{{concept}}` inside User Prompt, so MemGraph can pass the selected concept to the model.
+API Key 模式支持 Responses、Chat Completions 兼容接口和自定义模型，地址必须使用 HTTPS。更改服务来源时清除旧密钥，避免发送到另一个服务商。安全存储不可用时密钥仅在本次会话有效。
 
-Templates support these variables:
+ChatGPT 登录需先安装官方 Codex CLI：`npm install -g @openai/codex`。设置中登录并查看设备授权信息，在浏览器完成授权。此模式仅适用于 OpenAI；不复制用户的 Codex 登录文件。
 
-- `{{concept}}`
-- `{{selected_text}}`
-- `{{parent_concept}}`
-- `{{map_title}}`
-- `{{context_markdown}}`
-- `{{language}}`
+等待授权时，“登录”按钮保持禁用；关闭再打开设置会恢复同一次登录的进度和链接，不会启动重复任务。可点击“取消登录”后重新尝试；超过 10 分钟未结束的任务会自动取消并允许重试。成功后会自动检查登录状态，也可手动点击“检查登录状态”。
 
-## Markdown
+模板的名称、System Prompt、User Prompt 必填，User Prompt 必须包含 `{{concept}}`。其余变量为 `{{selected_text}}`、`{{parent_concept}}`、`{{map_title}}`、`{{context_markdown}}`、`{{language}}`。模板管理支持新建、复制、保存、默认选择及回收站删除；问号帮助解释这些字段。
 
-- Copy Node Markdown copies the selected node explanation.
-- Right-click a map and choose Export Map Markdown to write the full map as a Markdown document.
+## 数据保护
 
-## API Settings
+默认数据位于系统应用数据目录的 `MemGraphElectron/data`。可在设置查看和切换目录；切换会取消进行中的任务并读取目标目录的数据，不自动搬移旧目录。
 
-- API Key mode requires an HTTPS Base URL with no embedded credentials, query string, or fragment. Redirects are blocked; enter the final endpoint.
-- Changing the endpoint scheme, host, or port clears the key field. Enter the correct key for the new service before saving.
-- API requests time out after 120 seconds and responses are limited to 4 MiB. ChatGPT generation times out after 10 minutes.
-- Markdown previews block local and remote images/resources and permit only HTTP/HTTPS external links. The original Markdown is preserved for copying and export.
-- Changing database directories cancels in-flight generation requests.
+文件菜单可手动备份或恢复 SQLite。自动快照位于当前数据目录的 `backups` 文件夹。数据库未加密，应使用系统磁盘加密保护敏感知识。Markdown 中的 HTML、图片资源和危险协议不执行，原文仍可复制或导出。
 
-- Authentication supports two modes: `API Key` and `ChatGPT Login (Codex CLI)`.
-- API Key is never saved into the project database.
-- On Linux, MemGraph uses the system Secret Service through `secret-tool` when available.
-- If no Secret Service backend is found, the API Key is kept for the current app session only.
-- ChatGPT Login uses the official Codex CLI device-login flow and is available for OpenAI models only. MemGraph starts Codex as a child process but never reads or stores ChatGPT credentials.
-- Install Codex CLI with `npm install -g @openai/codex`, then choose ChatGPT Login and click `Sign in with ChatGPT` in Settings.
-- Base URL defaults to `https://api.openai.com`.
-- Model defaults to `gpt-5.6-terra` for new installations.
-- API Mode can be `Responses` or `Chat Completions Compatible`.
-- OpenAI presets mirror the models currently visible in Codex: `gpt-5.6-sol` (frontier), `gpt-5.6-terra` (balanced), `gpt-5.6-luna` (fast), `gpt-5.5`, `gpt-5.4`, and `gpt-5.4-mini`. They use the Responses API.
-- Model availability depends on the OpenAI account used by the API key or ChatGPT login. Select `Custom` to enter another supported model ID.
-- DeepSeek presets include the latest `deepseek-v4-flash` and `deepseek-v4-pro`. Both use `https://api.deepseek.com` and `Chat Completions Compatible` mode.
-- Existing `OpenAI GPT-5.4 Mini` remains available for compatibility.
-- `DeepSeek V4 Pro` sets Base URL to `https://api.deepseek.com`, model to `deepseek-v4-pro`, and API Mode to `Chat Completions Compatible`.
-- Linked Node Generation controls whether creating a node from selected explanation text automatically calls the model. It is off by default.
+## 反馈
 
-## Database Directory
+GitHub 反馈打开浏览器的预填 Issue 页面，用户登录后手动提交。默认只含版本、系统、架构及问题模板；不会自动附加知识地图、Prompt、密钥、日志或截图。
 
-Settings lets you change the database directory. Changing the directory takes effect immediately after pressing OK: MemGraph opens `memgraph.sqlite3` in the selected directory and reloads the map list from that database. Existing data is not moved automatically.
+邮件反馈打开默认邮件客户端，收件人为 `leo.oceanai@gmail.com`，不自动发送或添加附件。没有可用客户端时可复制地址及反馈文本。
 
-## Map Management
+## 更新与恢复
 
-Use New Map to create a map. Right-click a map in the list to rename it, export it as Markdown, or move it to Recycle Bin. These map-specific actions are intentionally available only from the selected map's context menu.
+Windows 安装版和 Linux AppImage 可在文件菜单检查更新。更新经过签名和文件摘要验证；用户点击下载后，再确认重启安装。更新前取消任务并备份数据库。
 
-## Recycle Bin
+测试版更新需要在设置中启用 Beta 通道。ZIP/tar 解压版不自动替换文件，请从 GitHub Releases 下载新版并使用已有数据目录。
 
-Recycle Bin manages deleted maps and nodes. Deleted maps are hidden from the map list, and deleted nodes are hidden from the graph. Open Recycle Bin from the File menu to restore selected maps or nodes, or empty it to permanently delete everything inside.
+下载、校验或备份失败时保持当前版本。若新版启动或迁移失败，保留快照和旧包，退出程序后使用旧版本与对应的升级前快照恢复；不要让旧程序直接打开不兼容的新结构数据库。
 
-Deleted templates also move to Recycle Bin. Restore a deleted template from the Templates tab before emptying the bin.
-
-## Node Editing And Connections
-
-Use Edit Node to change the selected node title and Markdown content manually. Use Connect Node to create a manual connection from the selected source node to another active node. Use Update Relation to choose a source node and target node, then MemGraph calls the configured API model and writes the generated relationship section at the end of the source concept explanation. The canvas connection remains a visual link only.
-
-## Build And Release
-
-Check or install dependencies:
+## 开发验证
 
 ```bash
-./DevScripts/setup_env.sh
-./DevScripts/setup_env.sh --install
+cd Source
+npm ci
+npm run dev
+npm run verify
+npm run package -- --publish never
 ```
 
-Build x64 portable release:
-
-```bash
-./DevScripts/build.sh --arch x64 --type Release --package portable
-```
-
-Portable builds create both a compressed archive and an unpacked manual-test directory:
-
-```text
-Releases/MemGraph-v0.1.0-linux-x64-portable.tar.gz
-Releases/MemGraph-v0.1.0-linux-x64-portable-unpacked/
-```
-
-Build both x64 and strict 32-bit x86 packages:
-
-```bash
-./DevScripts/build.sh --arch all --type Release --package all
-```
-
-On Fedora 43, strict 32-bit Qt development packages conflict with the installed x64 Qt development package on `/usr/bin/qt-configure-module`. Fedora 43 also does not publish a `386` container image, so the default isolated x86 build uses `docker.io/i386/debian:trixie`:
-
-```bash
-./DevScripts/build_x86_podman.sh --package portable
-```
-
-Create a source and release backup:
-
-```bash
-./DevScripts/backup.sh
-```
+跨平台发布、签名密钥备份、草稿发布及验收证据见 `electron_release.md`、`acceptance.md`。本地 Codex 修复 Issue 的操作流程见 `codex_workflow.md`。

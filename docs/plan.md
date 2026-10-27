@@ -1,5 +1,34 @@
 # Project Plan
 
+## 0.2.0-beta.2 - Login Lifecycle Fix
+
+Status: Implemented; local checks cover 56 unit tests and seven Electron UI scenarios. Package and hosted results are recorded separately.
+
+- [x] Reproduce the frontend treating a login-start acknowledgement as completed login.
+- [x] Reuse an active login, restore progress after reopening Settings, and ignore stale session callbacks.
+- [x] Add cancellation, timeout recovery and reliable child-process termination.
+- [x] Add mock-only concurrent/reopen/cancel/retry/localization tests without real credentials or provider calls.
+- [x] Bump package and lockfile to 0.2.0-beta.2; preserve older packages and data.
+- [x] Verify Linux unpacked/AppImage startup and retain packages plus `Releases/MemGraph-v0.2.0-beta.2-linux-x64-unpacked` for manual testing.
+- [x] Confirm Windows/Linux hosted login regression checks (run `40451125499` at `9737b47`); subsequent PR checks remain the merge gate.
+
+## Electron Migration - 0.2.0-beta.1
+
+Status: Implemented; Windows/Linux hosted tests and packaging passed. Owner review and installed-upgrade acceptance remain pending.
+
+- [x] Freeze Qt source/release and preserve a private SQLite snapshot.
+- [x] Migrate core learning, templates, providers, Markdown and recycle bin.
+- [x] Implement restricted IPC, safe credentials and consistent database import.
+- [x] Add browser GitHub feedback and mailto email feedback.
+- [x] Add unit, migration, updater, release-tool and real Electron UI tests.
+- [x] Implement Windows/Linux packaging and guarded draft release workflows.
+- [x] Verify Linux unpacked app and final AppImage with isolated profiles; retain packages and unpacked manual-test copy in Releases.
+- [x] Publish migration branch to the public MIT repository and open PR #1; Windows/Linux CI passed at `8654609` (run `40432043548`).
+- [x] Download both platforms' packages, retain unpacked manual-test copies, verify actual signed update assets, and fix the standalone verification CLI import cycle.
+- [ ] Owner reviews and merges migration PR #1.
+- [ ] Validate draft release artifacts; owner approval still required to publish.
+- [ ] Record actual installed Windows/Linux N-to-N+1 upgrade evidence before promoting stable.
+
 ## 2026-10-26 Security And Private GitHub Publication
 
 Status: Source fixes verified and published privately; system security updates await the user's sudo password
@@ -10,7 +39,7 @@ Status: Source fixes verified and published privately; system security updates a
 - [x] Complete final build, tests, and x64 packages.
 - [x] Publish reviewed source to a private GitHub repository and verify visibility.
 
-Repository: https://github.com/Leos-byte/MemoryGraph (`private: true`).
+Repository: https://github.com/Leos-byte/MemoryGraph (private at that milestone; made public during the Electron migration at the user's request).
 Initial source/security commit: `4494290`.
 
 ## 2026-08-27 Menu simplification

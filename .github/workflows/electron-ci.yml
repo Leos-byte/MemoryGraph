@@ -1,0 +1,99 @@
+name: Electron CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: electron-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Electron (${{ matrix.platform }} x64)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux
+          - os: windows-2022
+            platform: windows
+    defaults:
+      run:
+        working-directory: Source
+        shell: bash
+    env:
+      CI: 'true'
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          architecture: x64
+          cache: npm
+          cache-dependency-path: Source/package-lock.json
+      - name: Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2 libgbm1 libatk-bridge2.0-0 libsecret-1-0 libfuse2
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Test release tooling
+        run: node --test ../DevScripts/tests/*.test.mjs
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm run test
+      - name: Build
+        run: npm run build
+      - name: Electron end-to-end tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:e2e
+      - name: Electron end-to-end tests (Windows)
+        if: runner.os == 'Windows'
+        run: npm run test:e2e
+      - name: Build unpacked app
+        run: npm run package:dir -- --publish never
+      - name: Verify packaged app with an isolated data profile
+        run: npm run smoke:package
+      - name: Build packages without publishing
+        run: npm run package -- --publish never
+      - name: Collect packages and preserve unpacked file modes
+        run: node ../DevScripts/release-artifacts.mjs stage --platform "$PLATFORM" --source dist-release --out ../artifact-stage
+        env:
+          PLATFORM: ${{ matrix.platform }}
+      - name: Upload packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-packages-${{ matrix.platform }}-x64
+          path: artifact-stage/packages/*
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+      - name: Upload unpacked app archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-unpacked-${{ matrix.platform }}-x64
+          path: artifact-stage/unpacked/*
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+      - name: Upload synthetic test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-test-results-${{ matrix.platform }}-x64
+          path: Source/test-results/
+          if-no-files-found: ignore
+          retention-days: 3

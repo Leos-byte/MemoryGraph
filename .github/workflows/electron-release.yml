@@ -1,0 +1,182 @@
+name: Electron Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vVERSION tag at current main HEAD (stable or beta.N)
+        required: true
+        default: v0.2.0-beta.1
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: electron-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.repository == 'Leos-byte/MemoryGraph' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.metadata.outputs.sha }}
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+      channel: ${{ steps.metadata.outputs.channel }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Validate dispatch, main SHA, existing tag, package and lock versions
+        id: metadata
+        run: node DevScripts/release-metadata.mjs
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+
+  build:
+    needs: validate
+    name: Release build (${{ matrix.platform }} x64)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux
+          - os: windows-2022
+            platform: windows
+    defaults:
+      run:
+        working-directory: Source
+        shell: bash
+    env:
+      CI: 'true'
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          architecture: x64
+          cache: npm
+          cache-dependency-path: Source/package-lock.json
+      - name: Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2 libgbm1 libatk-bridge2.0-0 libsecret-1-0 libfuse2
+      - run: npm ci
+      - name: Test release tooling
+        run: node --test ../DevScripts/tests/*.test.mjs
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - name: Electron end-to-end tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:e2e
+      - name: Electron end-to-end tests (Windows)
+        if: runner.os == 'Windows'
+        run: npm run test:e2e
+      - run: npm run package:dir -- --publish never
+      - name: Verify packaged app with an isolated data profile
+        run: npm run smoke:package
+      - run: npm run package -- --publish never
+      - name: Collect release artifacts
+        run: node ../DevScripts/release-artifacts.mjs stage --platform "$PLATFORM" --source dist-release --out ../artifact-stage --version "$VERSION"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          VERSION: ${{ needs.validate.outputs.version }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-packages-${{ matrix.platform }}-x64
+          path: artifact-stage/packages/*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-unpacked-${{ matrix.platform }}-x64
+          path: artifact-stage/unpacked/*
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  sign:
+    needs: [validate, build]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: release-packages-*-x64
+          path: incoming
+      - name: Assemble the four required packages without name collisions
+        run: node DevScripts/release-artifacts.mjs assemble --source incoming --out Source/dist-release --version "$VERSION"
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+      - run: npm ci
+        working-directory: Source
+      - name: Sign update manifest (missing or mismatched keys must fail)
+        working-directory: Source
+        run: npm run release:sign -- --dir dist-release --version "$VERSION" --channel "$CHANNEL"
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          CHANNEL: ${{ needs.validate.outputs.channel }}
+          SIGNING_PRIVATE_KEY: ${{ secrets.SIGNING_PRIVATE_KEY }}
+      - name: Require signed manifest before handing off to publish
+        run: node DevScripts/release-artifacts.mjs check-signed --source Source/dist-release --version "$VERSION"
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: signed-electron-release
+          path: Source/dist-release/*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  publish:
+    needs: [validate, sign]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: signed-electron-release
+          path: signed-release
+      - name: Revalidate refs, signed assets, and create or resume a draft release
+        run: node DevScripts/publish-electron.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+          RELEASE_SHA: ${{ needs.validate.outputs.sha }}
+          RELEASE_DIR: signed-release
