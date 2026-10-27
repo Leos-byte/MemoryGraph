@@ -1,5 +1,14 @@
 # Problem Log
 
+## 2026-10-27 - Local Release Artifact Mirroring
+
+- Issue: the 585,784,363-byte signed Actions archive could not be downloaded completely to this machine. Multiple connections timed out after 20 seconds or transferred only partial chunks before their 120-second limit.
+- Cause: insufficient/reliably unavailable local download connectivity; the hosted build, signature/hash verification, upload and release were successful. This was not an installer or signing failure.
+- Attempts: one bounded 12-way segmented mirror attempt; then independent small-file metadata/signature downloads succeeded. The incomplete archive was not extracted or treated as valid.
+- Resolution: publish the CI-verified prerelease after independently verifying the metadata signature/asset coverage. Retain the existing source-equivalent local Linux builds/unpacked copy and record that they are not byte-identical GitHub artifacts.
+- Elapsed: no precise total was recorded; each large transfer was explicitly limited to 120 seconds.
+- Prevention: keep public publication dependent on CI artifact verification and small signed-metadata checks, not a best-effort local full mirror. Use finite timeouts, transfer/digest validation, and explicit incomplete-mirror records; never label partial archives as packages.
+
 ## 2026-10-27 - Login Already Running
 
 - User report: "Error invoking remote method 'memgraph:command': Error: Login is already running."

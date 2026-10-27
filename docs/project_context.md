@@ -24,9 +24,10 @@ MemGraph helps users understand, connect, remember, and transfer knowledge throu
 
 ## Release Rules
 
-- Repository: Leos-byte/MemoryGraph, public with MIT license after publication review.
-- Current target version 0.2.0-beta.2 (login lifecycle fix). Manual releases first create drafts; owner confirms publication.
-- Migration branch `migration/electron`, PR #1 awaits owner review/merge. Windows Server 2022 and Ubuntu 22.04 CI run `40432043548` passed tests, packaged startup, and both target formats at `8654609`. No Electron release has been published and no installed N-to-N+1 update has been verified.
+- Repository: Leos-byte/MemoryGraph, public with MIT license. Active branch is main.
+- Released 0.2.0-beta.2 as a public prerelease on 2026-10-27 at the user's explicit request: https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.2 . Future releases still start as drafts and require owner approval.
+- PR #1 merged at `6a5c18a3ba5b343cada9100f11fa2dbf9e2e908e`, tagged `v0.2.0-beta.2`. Release run `40453434325` passed both platforms, signing and draft upload (56 unit tests, seven UI scenarios, 48 release-tool tests). The agent then independently verified signed metadata/asset coverage and made the release public. Actual installed N-to-N+1 updating remains untested.
+- GitHub has all nine release assets. The full Actions artifact mirror to this machine timed out; existing local beta.2 Linux packages/unpacked copy remain available but are not byte-identical GitHub build artifacts. See test/release-20261027.md.
 - Windows installer/Linux AppImage auto-update; ZIP/tar users download a newer package. Stable and beta channels are separate.
 - Signed manifests bind version/channel/file hashes. Private update key only in ignored Backup and GitHub SIGNING_PRIVATE_KEY secret; public key ships with app.
 - First Windows builds are unsigned publishers; independent update signatures still required.

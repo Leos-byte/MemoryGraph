@@ -125,3 +125,11 @@ Implementation decisions:
 ## 2026-10-27 - Login Error Report
 
 > 模型登陆的时候出现 Error invoking remote method 'memgraph:command': Error: Login is already running.
+
+## 2026-10-27 - Public Release Approval
+
+> 合并pr并在github发布Releases
+
+> 什么意思
+
+> 继续

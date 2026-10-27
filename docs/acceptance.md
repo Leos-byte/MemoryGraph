@@ -1,23 +1,23 @@
 # Electron Migration Acceptance
 
-Target: **MemGraph 0.2.0-beta.1**, Windows x64 (NSIS + zip) and Linux x64 (AppImage + tar.gz). Use synthetic content and an isolated test data directory. Never test migrations/restores on the only copy of a user's data. A checked box requires observed evidence, not an implemented feature or a workflow file.
+Target: **MemGraph 0.2.0-beta.2**, Windows x64 (NSIS + zip) and Linux x64 (AppImage + tar.gz). Public prerelease authorized by the owner on 2026-10-27. Unchecked manual gates below remain open before stable promotion. Use synthetic content and an isolated test data directory. Never test migrations/restores on the only copy of a user's data. A checked box requires observed evidence, not an implemented feature or a workflow file.
 
 ## Evidence Record
 
 | Field | Record before approving release |
 | --- | --- |
-| Tag / full commit SHA | Migration build: `865460991f1b2212940d89c3654d32e3469eb12a`; no Electron release tag yet |
+| Tag / full commit SHA | `v0.2.0-beta.2` / `6a5c18a3ba5b343cada9100f11fa2dbf9e2e908e` |
 | Tester / date | Automated agent validation, 2026-10-26/27 |
 | Windows version / architecture | Windows Server 2022 x64 hosted runner; Windows 10/11 installation not run |
 | Linux distribution / architecture | Fedora 44 x64 local; Ubuntu 22.04 x64 hosted CI |
-| Windows CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40432043548; `ci-packages-windows-x64`, `ci-unpacked-windows-x64` |
-| Ubuntu 22.04 CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40432043548; `ci-packages-linux-x64`, `ci-unpacked-linux-x64` |
+| Windows CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40453434325; `release-packages-windows-x64`, `release-unpacked-windows-x64` |
+| Ubuntu 22.04 CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40453434325; `release-packages-linux-x64`, `release-unpacked-linux-x64` |
 | Real package smoke / upgrade evidence | Linux unpacked and final AppImage start/SQLite/graph/isolation checks passed using synthetic profiles. AppImage used extract-and-run; actual installed N-to-N+1 replacement and FUSE mode remain untested. |
 | Known limitations / release notes | Windows publisher is unsigned; real provider/login, OS credential backend, NSIS installation and installed cross-version update checks remain manual release gates |
 
-Both hosted jobs passed 47 release-tool tests, 45 unit tests, five real Electron UI scenarios and an isolated unpacked-application smoke test, and built their two package formats. These checks do not establish that NSIS installation, OS credentials, or an installed **N-to-N+1 upgrade** works. That upgrade has not been tested by this task. Record unavailable tests as **not run**, not passed. Do not attach private screenshots, graphs, tokens, databases, or raw provider logs as evidence.
+Both release jobs passed 48 release-tool tests, 56 unit tests, seven real Electron UI scenarios and an isolated unpacked-application smoke test, and built their two package formats. These checks do not establish that NSIS installation, OS credentials, or an installed **N-to-N+1 upgrade** works. That upgrade has not been tested by this task. Record unavailable tests as **not run**, not passed. Do not attach private screenshots, graphs, tokens, databases, or raw provider logs as evidence.
 
-The downloaded artifacts from run `40432043548` are retained under `Releases/0.2.0-beta.1-ci-40432043548`: `packages`, `linux-unpacked`, and `win-unpacked`. Both downloaded Linux formats also passed local isolated startup checks. Seven real assets were signed locally and independently verified; this did not create or publish a GitHub Release. A subsequent standalone CLI regression adds one release-tool test (48 total). See `test/electron-acceptance-20261027.md`.
+Historical beta.1 artifacts from run `40432043548` remain under `Releases/0.2.0-beta.1-ci-40432043548`; see `test/electron-acceptance-20261027.md`. Local beta.2 Fedora packages and an unpacked manual-test copy are also retained. The final signed Actions artifact could not be mirrored completely because of network timeouts, so it is not recorded as a downloaded-package local smoke pass. All seven package/updater assets were fully verified in CI before upload; metadata signatures, GitHub metadata digests, names and sizes were independently checked locally before publication. See `test/release-20261027.md`.
 
 ## Automated Gates
 
@@ -61,16 +61,17 @@ The downloaded artifacts from run `40432043548` are retained under `Releases/0.2
 
 - [x] The actual packaged resources include the intended Ed25519 `update-public-key.pem` (both downloaded unpacked builds; compare parsed keys because Windows checkout uses CRLF).
 - [ ] A missing signing secret does not break ordinary builds but blocks the signing/publish path. Missing public key and mismatched key pair also block publication.
-- [x] `release-manifest.json` and `release-manifest.sig` verify against the bundled key, covering all four packages, both updater YAML files, and matching optional blockmaps (local reviewed CI artifacts, not yet a GitHub Release).
+- [x] `release-manifest.json` and `release-manifest.sig` verify against the bundled key, covering all four packages, both updater YAML files, and matching optional blockmaps (complete byte verification in release CI; independent local metadata signature/coverage verification before public publication).
 - [ ] Modified manifest, invalid signature, missing coverage, altered package size/hash, duplicate asset, unexpected file, and wrong channel/version are rejected before upload/install.
 - [ ] Installed NSIS/AppImage checks beta/stable channel correctly; no silent download/install, downgrade, or unverified update occurs. Portable zip/tar builds give a clear unsupported/manual update path.
 - [ ] On a test prerelease, the previous installed version discovers/downloads/verifies the update; install/relaunch preserves data. Repeat rejection testing with controlled tampered metadata. A draft alone cannot prove this flow.
-- [ ] Release notes distinguish signed update metadata from OS code-signing. No Windows publisher trust is claimed without Authenticode evidence.
+- [x] Release notes distinguish signed update metadata from OS code-signing. No Windows publisher trust is claimed without Authenticode evidence.
 
 ## Publication Approval
 
 - [x] Repository visibility is public, MIT license is present, and maintainer contact is correct.
-- [ ] Manual dispatch is on `main`; tag, full SHA, package version, and lockfile versions match. Protect release tags and avoid moving `main` during the run.
-- [ ] Only the final publish job has `contents: write`; PR checks receive no secrets. Signing secret is scoped to signing, not building/publishing.
-- [ ] Workflow infers beta/stable from the validated version and creates only a draft (prerelease for beta, non-prerelease for stable); assets come from the same run. It rejects already-published releases and moved refs; maintainers do not change refs or publish while an upload is running.
-- [ ] Review all downloaded release artifacts, manual smoke evidence, known limitations, and notes before a maintainer explicitly publishes the draft. No auto-merge or issue-triggered execution is enabled.
+- [x] Manual dispatch was on `main`; tag, full SHA, package version, and lockfile versions matched. `main`/tag were not moved during the run and were rechecked before public publication.
+- [ ] Configure/prove repository release-tag protection rules; this task did not change those rules.
+- [x] Only the final publish job has `contents: write`; PR checks receive no secrets. Signing secret is scoped to signing, not building/publishing.
+- [x] Workflow inferred beta from the validated version and created only a draft; all nine assets came from one successful run. Upload finished before the separate public-publish command. Published releases and moved refs are rejected by the tooling.
+- [x] Owner explicitly requested PR merge and public publication. The prerelease notes disclose incomplete manual gates and unsigned Windows publishers. No auto-merge or issue-triggered execution was enabled. Full local mirroring was not claimed successful.

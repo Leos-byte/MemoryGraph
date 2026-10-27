@@ -2,7 +2,7 @@
 
 ## 0.2.0-beta.2 - Login Lifecycle Fix
 
-Status: Implemented; local checks cover 56 unit tests and seven Electron UI scenarios. Package and hosted results are recorded separately.
+Status: Released as public prerelease v0.2.0-beta.2 on 2026-10-27. Release run `40453434325` passed both platforms; remaining manual upgrade/OS checks are not claimed complete.
 
 - [x] Reproduce the frontend treating a login-start acknowledgement as completed login.
 - [x] Reuse an active login, restore progress after reopening Settings, and ignore stale session callbacks.
@@ -14,7 +14,7 @@ Status: Implemented; local checks cover 56 unit tests and seven Electron UI scen
 
 ## Electron Migration - 0.2.0-beta.1
 
-Status: Implemented; Windows/Linux hosted tests and packaging passed. Owner review and installed-upgrade acceptance remain pending.
+Status: Implemented and merged through PR #1. First public Electron release is v0.2.0-beta.2; installed-upgrade acceptance remains pending before stable promotion.
 
 - [x] Freeze Qt source/release and preserve a private SQLite snapshot.
 - [x] Migrate core learning, templates, providers, Markdown and recycle bin.
@@ -25,8 +25,8 @@ Status: Implemented; Windows/Linux hosted tests and packaging passed. Owner revi
 - [x] Verify Linux unpacked app and final AppImage with isolated profiles; retain packages and unpacked manual-test copy in Releases.
 - [x] Publish migration branch to the public MIT repository and open PR #1; Windows/Linux CI passed at `8654609` (run `40432043548`).
 - [x] Download both platforms' packages, retain unpacked manual-test copies, verify actual signed update assets, and fix the standalone verification CLI import cycle.
-- [ ] Owner reviews and merges migration PR #1.
-- [ ] Validate draft release artifacts; owner approval still required to publish.
+- [x] Owner explicitly requested merge and publication; PR #1 merged at `6a5c18a`.
+- [x] Validate/sign all cross-platform assets in release CI, independently check the metadata signature and file coverage, then publicly publish v0.2.0-beta.2 as a prerelease.
 - [ ] Record actual installed Windows/Linux N-to-N+1 upgrade evidence before promoting stable.
 
 ## 2026-10-26 Security And Private GitHub Publication

@@ -2,6 +2,7 @@
 
 ## 0.2.0-beta.2 - 2026-10-27 - Login Session Recovery
 
+- First public Electron prerelease: https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.2 . PR #1 merged; tag points to `6a5c18a3ba5b343cada9100f11fa2dbf9e2e908e`. Windows/Linux release run `40453434325` passed.
 - Fix the login button becoming available while Codex still waits for device authorization. Repeated requests now reuse the current login instead of throwing "Login is already running."
 - Keep application-owned login progress across Settings close/reopen; use revisioned events to reject stale IPC responses.
 - Add cancel/retry and ten-minute timeout recovery, and terminate a child process that ignores cancellation.

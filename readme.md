@@ -4,7 +4,7 @@
 
 理解、连接、记忆与迁移。输入概念生成 Markdown 解释，在解释中选择陌生内容继续展开，构建保存在本机的知识地图。
 
-当前开发版本：**0.2.0-beta.2**，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
+最新公开测试版：[**0.2.0-beta.2**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.2)，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
 
 ## 下载与反馈
 
