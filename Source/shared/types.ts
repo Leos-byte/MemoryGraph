@@ -14,5 +14,6 @@ export interface Bridge {
   invoke<T = unknown>(command: Command, payload?: Record<string, unknown>): Promise<T>;
   onChange(listener: () => void): () => void;
   onLogin(listener: (state: LoginState) => void): () => void;
+  onGenerationError(listener: (message: string) => void): () => void;
 }
 declare global { interface Window { memgraph: Bridge } }

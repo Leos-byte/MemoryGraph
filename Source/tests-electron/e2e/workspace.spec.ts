@@ -177,3 +177,16 @@ test('login keeps real progress across settings reopen, deduplicates, cancels an
   await invoke('settings.save', { language: 'zh_CN' });
   await expect(dialog.getByTestId('login-state')).toHaveText('登录已完成');
 });
+
+test('relationship generation errors remain visible without corrupting login state', async () => {
+  const map = await invoke('map.create', { title: 'Relationship errors' });
+  const source = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Source' });
+  const target = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Target' });
+  await application.evaluate(() => {
+    process.env.MEMGRAPH_MOCK_AI = '0';
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: 'Synthetic relation failure' } }), { status: 429 });
+  });
+  await invoke('edge.updateRelation', { sourceId: source.id, targetId: target.id });
+  await expect(page.getByText('HTTP 429: Synthetic relation failure', { exact: true })).toBeVisible();
+  expect((await invoke<LoginState>('codex.loginState')).status).toBe('idle');
+});

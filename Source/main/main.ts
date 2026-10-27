@@ -109,6 +109,7 @@ function generate(nodeId: Id, templateId?: unknown, relationTarget?: Id) {
     const message = error instanceof Error ? error.message : String(error);
     if (!relationTarget) store.setMarkdown(nodeId, `${node.markdown}\n\nGeneration failed: ${message}`, 'error');
     store.recordGeneration(nodeId, settings.model, settings.apiMode, '', 'error', message);
+    if (window && !window.isDestroyed()) window.webContents.send('memgraph:generation-error', message);
   }).finally(() => { if (jobs.get(nodeId)?.request === request) jobs.delete(nodeId); changed(); });
 }
 async function changeDirectory(directory: string) {

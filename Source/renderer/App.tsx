@@ -81,6 +81,7 @@ export function App() {
     else if (state.status === 'timed_out') notify(t('loginTimedOut'), 'error');
     else if (state.status === 'succeeded') notify(t('loginCompleted'), 'success');
   }), [notify, t]);
+  useEffect(() => window.memgraph?.onGenerationError(message => notify(message, 'error')), [notify]);
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && !event.altKey && !dialog) {
