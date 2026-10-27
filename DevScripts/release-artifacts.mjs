@@ -55,7 +55,9 @@ export function stage({ source, out, platform, version }) {
   mkdirSync(resolve(out, 'packages'));
   mkdirSync(resolve(out, 'unpacked'));
   for (const name of packages) copyFileSync(resolve(source, name), resolve(out, 'packages', name));
-  execFileSync('tar', ['-czf', resolve(out, 'unpacked', `MemGraph-${version}-${platform}-x64-unpacked.tar.gz`), '-C', resolve(source), unpacked], { stdio: 'inherit' });
+  const tar = process.platform === 'win32' ? resolve(process.env.SystemRoot || 'C:/Windows', 'System32', 'tar.exe') : 'tar';
+  // Git Bash's GNU tar treats a drive-letter archive path as a remote host.
+  execFileSync(tar, ['-czf', `MemGraph-${version}-${platform}-x64-unpacked.tar.gz`, '-C', resolve(source), unpacked], { cwd: resolve(out, 'unpacked'), stdio: 'inherit' });
   return packages;
 }
 

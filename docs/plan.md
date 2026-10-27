@@ -10,7 +10,7 @@ Status: Implemented locally; final package verification and hosted CI in progres
 - [x] Add browser GitHub feedback and mailto email feedback.
 - [x] Add unit, migration, updater, release-tool and real Electron UI tests.
 - [x] Implement Windows/Linux packaging and guarded draft release workflows.
-- [x] Verify Linux unpacked application with a separate profile; final AppImage/manual-test copy in progress.
+- [x] Verify Linux unpacked app and final AppImage with isolated profiles; retain packages and unpacked manual-test copy in Releases.
 - [ ] Public repository review, source push and hosted Windows/Linux CI.
 - [ ] Validate draft release artifacts; owner approval still required to publish.
 - [ ] Record actual installed Windows/Linux N-to-N+1 upgrade evidence before promoting stable.

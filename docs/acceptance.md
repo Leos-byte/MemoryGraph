@@ -7,12 +7,12 @@ Target: **MemGraph 0.2.0-beta.1**, Windows x64 (NSIS + zip) and Linux x64 (AppIm
 | Field | Record before approving release |
 | --- | --- |
 | Tag / full commit SHA | Pending |
-| Tester / date | Pending |
+| Tester / date | Automated agent validation, 2026-10-26/27 |
 | Windows version / architecture | Pending; not available on local Fedora host |
-| Linux distribution / architecture | Record Fedora local and Ubuntu 22.04 CI separately |
+| Linux distribution / architecture | Fedora 44 x64 local; Ubuntu 22.04 x64 hosted CI |
 | Windows CI run / artifacts | Pending hosted run |
-| Ubuntu 22.04 CI run / artifacts | Pending hosted run |
-| Real package smoke / upgrade evidence | Pending; source E2E alone is insufficient |
+| Ubuntu 22.04 CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40342529574 |
+| Real package smoke / upgrade evidence | Linux unpacked and final AppImage start/SQLite/graph/isolation checks passed using synthetic profiles. AppImage used extract-and-run; actual installed N-to-N+1 replacement and FUSE mode remain untested. |
 | Known limitations / release notes | Pending |
 
 The infrastructure's CLI/unit checks can be run on Fedora. They cover signature policy and synthetic artifacts, not an installed **N-to-N+1 upgrade**, which has not been tested by this task. They do not establish that Windows packaging, installation, OS credentials, or updates work. Record unavailable tests as **not run**, not passed. Do not attach private screenshots, graphs, tokens, databases, or raw provider logs as evidence.
