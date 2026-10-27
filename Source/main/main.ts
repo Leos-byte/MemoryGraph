@@ -9,6 +9,7 @@ import { Store, importDatabase } from './store';
 import { apiGenerate, codexGenerate, runCodex } from './ai';
 import { feedbackText, feedbackUrl, renderTemplate, REPOSITORY, secureEndpoint, upsertRelation } from './core';
 import { Updates } from './updates';
+import { LoginSession } from './login';
 import { commands, type Command, type Id, type Settings, type Snapshot } from '../shared/types';
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'memgraph', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
@@ -29,8 +30,10 @@ let selectedMap: Id | null = null;
 const jobs = new Map<Id, { request: string; abort: AbortController }>();
 const legacy = testMode ? { database: null, settings: {} } : legacyInfo();
 const changed = () => { if (window && !window.isDestroyed()) window.webContents.send('memgraph:changed'); };
-const loginOutput = (text: string) => { if (!window.isDestroyed()) window.webContents.send('memgraph:login', text); };
-let loginAbort: AbortController | undefined;
+const login = new LoginSession(
+  (signal, output) => runCodex(['login', '--device-auth'], '', signal, output),
+  state => { if (window && !window.isDestroyed()) window.webContents.send('memgraph:login', state); }
+);
 const id = (value: unknown) => z.string().regex(/^[1-9]\d{0,18}$/).parse(value);
 const text = (value: unknown, max = 1000) => z.string().max(max).parse(value);
 const nonempty = (value: unknown, max = 200) => z.string().trim().min(1).max(max).parse(value);
@@ -106,7 +109,6 @@ function generate(nodeId: Id, templateId?: unknown, relationTarget?: Id) {
     const message = error instanceof Error ? error.message : String(error);
     if (!relationTarget) store.setMarkdown(nodeId, `${node.markdown}\n\nGeneration failed: ${message}`, 'error');
     store.recordGeneration(nodeId, settings.model, settings.apiMode, '', 'error', message);
-    loginOutput(message);
   }).finally(() => { if (jobs.get(nodeId)?.request === request) jobs.delete(nodeId); changed(); });
 }
 async function changeDirectory(directory: string) {
@@ -190,12 +192,9 @@ async function handle(command: Command, p: Record<string, unknown>): Promise<unk
     case 'data.backup': { const result = await dialog.showSaveDialog(window, { defaultPath: `MemGraph-backup-${Date.now()}.sqlite3`, filters: [{ name: 'SQLite', extensions: ['sqlite3'] }] }); if (result.filePath) { if (resolve(result.filePath) === resolve(config.settings.dataDirectory, 'memgraph.sqlite3')) throw new Error('Cannot overwrite the open database.'); await store.backup(result.filePath); } return result.filePath; }
     case 'data.restore': return chooseAndImport();
     case 'codex.status': { if (testMode) return 'Test mode'; return (await runCodex(['login', 'status'], '', AbortSignal.timeout(10000))).output; }
-    case 'codex.login': {
-      if (loginAbort) throw new Error('Login is already running.');
-      loginAbort = new AbortController();
-      void runCodex(['login', '--device-auth'], '', loginAbort.signal, loginOutput).then(result => loginOutput(`${result.output}\n${result.code === 0 ? 'Login completed.' : 'Login failed.'}`)).catch(error => loginOutput(String(error))).finally(() => { loginAbort = undefined; });
-      return;
-    }
+    case 'codex.login': return login.start();
+    case 'codex.loginState': return login.state;
+    case 'codex.cancelLogin': return login.cancel();
     case 'feedback.copy': { const body = feedbackText(app.getVersion(), `${process.platform} ${process.arch}`, p); clipboard.writeText(body); return body; }
     case 'feedback.github': case 'feedback.email': {
       const body = feedbackText(app.getVersion(), `${process.platform} ${process.arch}`, p);
@@ -256,5 +255,5 @@ else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
   app.whenReady().then(start).catch(error => { dialog.showErrorBox('MemGraph startup failed', `${String(error)}\nUser data: ${root}\nExisting snapshots remain in the data/backups directory.`); app.quit(); });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => { cancelAll(); loginAbort?.abort(); store?.close(); });
+  app.on('before-quit', () => { cancelAll(); login.cancel(); store?.close(); });
 }

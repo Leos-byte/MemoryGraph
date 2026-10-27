@@ -32,6 +32,8 @@ API Key 模式支持 Responses、Chat Completions 兼容接口和自定义模型
 
 ChatGPT 登录需先安装官方 Codex CLI：`npm install -g @openai/codex`。设置中登录并查看设备授权信息，在浏览器完成授权。此模式仅适用于 OpenAI；不复制用户的 Codex 登录文件。
 
+等待授权时，“登录”按钮保持禁用；关闭再打开设置会恢复同一次登录的进度和链接，不会启动重复任务。可点击“取消登录”后重新尝试；超过 10 分钟未结束的任务会自动取消并允许重试。成功后会自动检查登录状态，也可手动点击“检查登录状态”。
+
 模板的名称、System Prompt、User Prompt 必填，User Prompt 必须包含 `{{concept}}`。其余变量为 `{{selected_text}}`、`{{parent_concept}}`、`{{map_title}}`、`{{context_markdown}}`、`{{language}}`。模板管理支持新建、复制、保存、默认选择及回收站删除；问号帮助解释这些字段。
 
 ## 数据保护

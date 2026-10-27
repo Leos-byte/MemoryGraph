@@ -76,10 +76,11 @@ export function App() {
     try { if (localStorage.getItem(`memgraph.legacyPrompted:${path}`)) return; localStorage.setItem(`memgraph.legacyPrompted:${path}`, '1'); } catch { /* Storage may be disabled; the in-memory guard still applies. */ }
     setDialog({ kind: 'import', path });
   }, [snapshot?.legacyDatabase, dialog]);
-  useEffect(() => window.memgraph?.onLogin(text => {
-    if (/error|failed|失败|错误/i.test(text)) notify(text, 'error');
-    else if (/completed|success|成功/i.test(text)) notify(text, 'success');
-  }), [notify]);
+  useEffect(() => window.memgraph?.onLogin(state => {
+    if (state.status === 'failed') notify(t('loginFailed'), 'error');
+    else if (state.status === 'timed_out') notify(t('loginTimedOut'), 'error');
+    else if (state.status === 'succeeded') notify(t('loginCompleted'), 'success');
+  }), [notify, t]);
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && !event.altKey && !dialog) {

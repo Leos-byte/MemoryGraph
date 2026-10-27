@@ -1,5 +1,13 @@
 # Version History
 
+## 0.2.0-beta.2 - 2026-10-27 - Login Session Recovery
+
+- Fix the login button becoming available while Codex still waits for device authorization. Repeated requests now reuse the current login instead of throwing "Login is already running."
+- Keep application-owned login progress across Settings close/reopen; use revisioned events to reject stale IPC responses.
+- Add cancel/retry and ten-minute timeout recovery, and terminate a child process that ignores cancellation.
+- Replace cumulative login output instead of appending duplicated copies; show localized progress/completion/failure states.
+- Add seven login-session tests, four process-lifecycle tests, and one real Electron login UI scenario using a fake CLI without real authorization or model calls.
+
 ## 0.2.0-beta.1 - Electron Migration
 
 - Replace Qt UI with Electron + React + TypeScript and React Flow, preserving graph learning behavior and existing SQLite data.

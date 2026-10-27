@@ -49,7 +49,7 @@ export function useWorkspace(t: Translate) {
     try {
       if (!window.memgraph) throw new Error(translate.current('bridgeMissing'));
       const value = await window.memgraph.invoke<T>(command, payload);
-      if (!['snapshot', 'codex.status', 'codex.login', 'data.choose', 'trash.list', 'external.open'].includes(command)) await refresh();
+      if (!['snapshot', 'codex.status', 'codex.login', 'codex.loginState', 'codex.cancelLogin', 'data.choose', 'trash.list', 'external.open'].includes(command)) await refresh();
       if (success && value !== false && value !== null) notify(success);
       return { ok: true, value };
     } catch (cause) {

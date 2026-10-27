@@ -49,17 +49,25 @@ export function codexExecutable(): { executable: string; prefix: string[] } {
 }
 export function runCodex(args: string[], input: string, signal: AbortSignal, onOutput?: (text: string) => void, cwd?: string): Promise<{ output: string; code: number }> {
   return new Promise((resolve, reject) => {
+    signal.throwIfAborted();
     const command = codexExecutable();
     const processEnv: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1', CLICOLOR: '0', TERM: 'dumb' }; delete processEnv.ELECTRON_RUN_AS_NODE;
     const child: ChildProcessWithoutNullStreams = spawn(command.executable, [...command.prefix, ...args], { cwd: cwd || tmpdir(), env: processEnv, shell: false, windowsHide: true });
     let rawOutput = '';
-    const timeout = setTimeout(() => child.kill(), 600000);
-    const abort = () => child.kill(); signal.addEventListener('abort', abort, { once: true });
-    if (signal.aborted) child.kill();
+    let killTimer: ReturnType<typeof setTimeout> | undefined;
+    const stop = () => {
+      if (child.exitCode !== null || child.signalCode !== null || killTimer) return;
+      child.kill();
+      killTimer = setTimeout(() => child.kill('SIGKILL'), 2000);
+      killTimer.unref();
+    };
+    const timeout = setTimeout(stop, 600000);
+    const abort = stop; signal.addEventListener('abort', abort, { once: true });
+    if (signal.aborted) stop();
     const append = (chunk: Buffer) => { rawOutput = (rawOutput + chunk.toString('utf8')).slice(-16384); onOutput?.(stripTerminal(rawOutput)); };
     child.stdout.on('data', append); child.stderr.on('data', append);
     child.stdin.on('error', () => {}); child.stdin.end(input);
-    const cleanup = () => { clearTimeout(timeout); signal.removeEventListener('abort', abort); };
+    const cleanup = () => { clearTimeout(timeout); if (killTimer) clearTimeout(killTimer); signal.removeEventListener('abort', abort); };
     child.on('error', error => { cleanup(); reject(error); });
     child.on('close', code => { cleanup(); if (signal.aborted) reject(new Error('Cancelled')); else resolve({ output: stripTerminal(rawOutput), code: code ?? -1 }); });
   });

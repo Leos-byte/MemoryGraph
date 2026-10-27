@@ -121,3 +121,7 @@ Implementation decisions:
 - Kept the existing Qt Widgets architecture and introduced a Fusion-based semantic design system rather than migrating to QML.
 - Prioritized the graph workspace and node explanation workflow, reduced simultaneous actions, and retained advanced management through menus.
 - Verified the UI with Qt offscreen screenshots at desktop and narrow window sizes.
+
+## 2026-10-27 - Login Error Report
+
+> 模型登陆的时候出现 Error invoking remote method 'memgraph:command': Error: Login is already running.

@@ -1,5 +1,17 @@
 # Project Plan
 
+## 0.2.0-beta.2 - Login Lifecycle Fix
+
+Status: Implemented; local typecheck, build, 56 unit tests and six Electron UI tests passed. Package and hosted checks are recorded separately.
+
+- [x] Reproduce the frontend treating a login-start acknowledgement as completed login.
+- [x] Reuse an active login, restore progress after reopening Settings, and ignore stale session callbacks.
+- [x] Add cancellation, timeout recovery and reliable child-process termination.
+- [x] Add mock-only concurrent/reopen/cancel/retry/localization tests without real credentials or provider calls.
+- [x] Bump package and lockfile to 0.2.0-beta.2; preserve older packages and data.
+- [x] Verify Linux unpacked/AppImage startup and retain packages plus `Releases/MemGraph-v0.2.0-beta.2-linux-x64-unpacked` for manual testing.
+- [ ] Confirm Windows/Linux hosted regression checks before merging or publication.
+
 ## Electron Migration - 0.2.0-beta.1
 
 Status: Implemented; Windows/Linux hosted tests and packaging passed. Owner review and installed-upgrade acceptance remain pending.

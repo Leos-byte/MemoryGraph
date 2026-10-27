@@ -1,5 +1,15 @@
 # Problem Log
 
+## 2026-10-27 - Login Already Running
+
+- User report: "Error invoking remote method 'memgraph:command': Error: Login is already running."
+- Cause: the login IPC returned immediately after starting the child process, but Settings interpreted that acknowledgement as completion, re-enabled the login button and immediately queried status. The still-running backend rejected the next click. There was no cancel/resume UI, and cumulative process output was appended repeatedly.
+- Fix: an application-owned LoginSession with idempotent start, revisioned progress, state recovery, cancellation, timeout, identity checks and process termination fallback. The UI follows actual session state and only automatically checks credentials after successful completion.
+- Attempts: one implementation and local regression cycle; typecheck caught an additional global text-based login listener, which was updated to consume typed state. No real login was attempted.
+- Result: 56 unit tests and six Electron UI scenarios passed, including concurrent calls, Settings reopen, cancel/retry, timeout, stale completion and localization. Final package/hosted checks are recorded in the test evidence.
+- Elapsed: precise wall-clock time was not recorded.
+- Prevention: test IPC acknowledgement separately from asynchronous operation completion, and keep long-lived operation state outside transient dialogs.
+
 ## 2026-10-27 - Standalone Release Verification Import Cycle
 
 - Issue: checking the downloaded, signed cross-platform packages through `release-artifacts.mjs check-signed` exited with code 13 and an unsettled top-level await.

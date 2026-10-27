@@ -1,8 +1,8 @@
 import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test';
-import { mkdtempSync, readFileSync, rmSync, existsSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-import type { Command, NodeRecord, Snapshot, Trash } from '../../shared/types';
+import { delimiter, join, resolve } from 'node:path';
+import type { Command, LoginState, NodeRecord, Snapshot, Trash } from '../../shared/types';
 
 let application: ElectronApplication;
 let page: Page;
@@ -13,6 +13,23 @@ async function invoke<T = any>(command: Command, payload: Record<string, unknown
 test.beforeEach(async () => {
   root = mkdtempSync(join(tmpdir(), 'memgraph-e2e-'));
   const environment = { ...process.env, MEMGRAPH_TEST_MODE: '1', MEMGRAPH_TEST_ROOT: root, MEMGRAPH_MOCK_AI: '1' } as Record<string, string>;
+  const fakeBin = join(root, 'fake-bin');
+  const cli = process.platform === 'win32' ? join(fakeBin, 'node_modules', '@openai', 'codex', 'bin', 'codex.js') : join(fakeBin, 'codex');
+  mkdirSync(process.platform === 'win32' ? join(fakeBin, 'node_modules', '@openai', 'codex', 'bin') : fakeBin, { recursive: true });
+  writeFileSync(cli, `#!/usr/bin/env node
+const { appendFileSync, existsSync } = require('node:fs');
+const { join } = require('node:path');
+const root = ${JSON.stringify(root)};
+if (!process.argv.includes('--device-auth')) process.exit(1);
+appendFileSync(join(root, 'login-starts'), 'start\\n');
+console.log('Open https://auth.example.test/device');
+setTimeout(() => console.log('Authorization code: TEST-ONLY'), 50);
+const timer = setInterval(() => { if (existsSync(join(root, 'finish-login'))) { clearInterval(timer); console.log('Logged in'); process.exit(0); } }, 50);
+process.on('SIGTERM', () => { clearInterval(timer); process.exit(0); });
+`, { mode: 0o755 });
+  const currentPath = process.env.PATH || process.env.Path || '';
+  for (const key of Object.keys(environment)) if (key.toLowerCase() === 'path') delete environment[key];
+  environment.PATH = fakeBin + delimiter + currentPath;
   delete environment.ELECTRON_RUN_AS_NODE;
   application = await electron.launch({ args: [...(process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless'] : []), resolve('.')], env: environment });
   page = await application.firstWindow();
@@ -128,4 +145,35 @@ test('template validation, Chinese localization, feedback privacy and renderer i
   await page.getByRole('button', { name: '模板帮助', exact: true }).click();
   await expect(page.getByRole('dialog').last()).toContainText('系统');
   await page.screenshot({ path: 'test-results/templates-zh.png' });
+});
+
+test('login keeps real progress across settings reopen, deduplicates, cancels and retries', async () => {
+  await invoke('settings.save', { authMode: 'chatgpt_login' });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  let dialog = page.getByTestId('settings-dialog');
+  await dialog.getByRole('button', { name: 'Log in', exact: true }).click();
+  await expect(dialog.getByTestId('login-state')).toHaveText('Waiting for login authorization');
+  await expect(dialog.getByRole('button', { name: 'Log in', exact: true })).toBeDisabled();
+  await expect(dialog.getByLabel('Login output')).toContainText('TEST-ONLY');
+  const states = await Promise.all([invoke<LoginState>('codex.login'), invoke<LoginState>('codex.login')]);
+  expect(states.every(state => state.status === 'running')).toBe(true);
+  expect(readFileSync(join(root, 'login-starts'), 'utf8')).toBe('start\n');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  dialog = page.getByTestId('settings-dialog');
+  await expect(dialog.getByRole('button', { name: 'Log in', exact: true })).toBeDisabled();
+  await expect(dialog.getByLabel('Login output')).toContainText('TEST-ONLY');
+  expect((await dialog.getByLabel('Login output').innerText()).match(/Open https/g)).toHaveLength(1);
+  await page.setViewportSize({ width: 960, height: 640 });
+  await page.screenshot({ path: 'test-results/login-running-narrow.png' });
+  await dialog.getByRole('button', { name: 'Cancel login', exact: true }).click();
+  await expect(dialog.getByTestId('login-state')).toHaveText('Login cancelled. You can log in again.');
+  await dialog.getByRole('button', { name: 'Log in', exact: true }).click();
+  await expect.poll(() => readFileSync(join(root, 'login-starts'), 'utf8')).toBe('start\nstart\n');
+  writeFileSync(join(root, 'finish-login'), 'done');
+  await expect(dialog.getByTestId('login-state')).toHaveText('Login completed');
+  await expect(dialog.getByRole('button', { name: 'Log in', exact: true })).toBeEnabled();
+  await expect(dialog).not.toContainText('Login is already running');
+  await invoke('settings.save', { language: 'zh_CN' });
+  await expect(dialog.getByTestId('login-state')).toHaveText('登录已完成');
 });
