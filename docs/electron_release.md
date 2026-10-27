@@ -1,6 +1,6 @@
 # Electron Release
 
-Release baseline: **0.2.0-beta.1**, repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. The repository is intended to be public and MIT licensed; visibility and license changes belong to the main migration owner. The publish job refuses a private repository. Nothing in these workflows merges pull requests or makes a draft release public.
+Release baseline: **0.2.0-beta.1**, public MIT repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. The publish job refuses a private repository. Nothing in these workflows merges pull requests or makes a draft release public.
 
 ## Local Setup
 
@@ -54,7 +54,7 @@ AppImage maps electron-builder's `${arch}` to `x86_64`; this is the same x64 tar
 
 For stable `X.Y.Z` versions, filenames use that version and updater metadata is `latest.yml` / `latest-linux.yml`. The validated package/tag version alone determines the signing/release channel: `X.Y.Z-beta.N` maps to `beta`; `X.Y.Z` maps to `stable`. Other prerelease names/build suffixes are rejected. The main-owned builder config must produce the corresponding channel metadata; do not assume that a GitHub provider infers `beta` just from a prerelease version. Use builder `publish.channel: beta` for beta or `publish.channel: latest` for stable when explicit configuration is needed, and verify the generated filenames before tagging. The signer's stable channel name remains `stable`, not `latest`.
 
-The old Qt scripts (`build.sh`, `setup_env.sh`, `build_x86_podman.sh`) are retained unchanged, not Electron entry points. Frozen Qt source is under `Backup/qt-v0.1.0/source`, with the frozen tag preserved; the earlier source/scripts snapshot is `Backup/20261026-215903/source.tar.gz`. Do not restore either over the active migration. `Backup`, its ignored signing key, existing `Releases`, and existing user databases must never be cleaned by release tooling. Electron does not support the old x86 target.
+`build.sh` and `setup_env.sh` are compatibility wrappers for the Electron scripts. The old `build_x86_podman.sh` belongs to the paused Qt x86 work and is not an Electron entry point. Frozen Qt source is under `Backup/qt-v0.1.0/source`, with the frozen tag preserved; the earlier source/scripts snapshot is `Backup/20261026-215903/source.tar.gz`. Do not restore either over the active migration. `Backup`, its ignored signing key, existing `Releases`, and existing user databases must never be cleaned by release tooling. Electron does not support the old x86 target.
 
 ## Pull Request Checks
 
@@ -107,6 +107,6 @@ Do not move `main` or the tag, or publish the draft, during a release run. Ref/d
 
 The application opens the user's browser with `https://github.com/Leos-byte/MemoryGraph/issues/new?template=bug.yml` and URL-encoded report text in `environment`. The bilingual form keeps version, OS, steps, expected/actual behavior, and privacy confirmation explicit. Evidence and email are optional; private logs are never mandatory. Mail contact is **leo.oceanai@gmail.com**, matching the runtime. Review all prefilled content before sending; the application must not submit issues or mail silently.
 
-Local infrastructure validation was performed on Fedora, not Windows. It tests signature policy and synthetic packages, not an actual installed N-to-N+1 upgrade; that upgrade has **not been tested** by this infrastructure task. CI configuration is not evidence that a hosted run has passed. A Windows CI run plus real NSIS/zip installation and upgrade checks are still release gates. Linux CI targets Ubuntu 22.04; Fedora runtime, AppImage/FUSE, keyring availability, and clean-system tar dependencies need separate testing. See [acceptance.md](acceptance.md) for explicit evidence recording.
+Local validation was performed on Fedora; hosted Windows Server 2022 and Ubuntu 22.04 tests and packaging both passed in [run 40432043548](https://github.com/Leos-byte/MemoryGraph/actions/runs/40432043548). The final local Linux AppImage also passed an isolated extract-and-run smoke test. These checks cover signature policy, synthetic update scenarios and actual application startup, not an installed N-to-N+1 upgrade. That upgrade, real NSIS installation, Windows 10/11 compatibility, AppImage/FUSE, OS keyrings and live providers remain manual release gates. See [acceptance.md](acceptance.md) for explicit evidence recording.
 
 References: [GitHub workflow permissions](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax), [GitHub release CLI](https://cli.github.com/manual/gh_release_create), [artifact permission preservation](https://github.com/actions/upload-artifact#permission-loss).

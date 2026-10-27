@@ -5,7 +5,7 @@
 - Issue: the first Windows CI run passed 46/47 release-tool checks but failed while invoking tar on an absolute drive-letter archive path.
 - Cause: Git Bash's GNU tar can interpret a colon in a Windows archive path as a remote-host separator.
 - Fix: select Windows' System32/tar.exe explicitly and write a relative archive filename from the output directory; retain normal tar on Linux.
-- Attempts: one hosted failure, one source correction, and local regression validation before rerunning CI. The existing archive test runs on both hosted platforms to prevent recurrence.
+- Attempts: one hosted failure, one source correction, and local regression validation before rerunning CI. Both Windows and Linux then passed run `40432043548`, including archive collection. The existing archive test runs on both hosted platforms to prevent recurrence.
 - Elapsed: precise time was not recorded.
 
 ## 2026-10-26 - Electron Migration Validation

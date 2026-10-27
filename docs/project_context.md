@@ -25,6 +25,7 @@ MemGraph helps users understand, connect, remember, and transfer knowledge throu
 
 - Repository: Leos-byte/MemoryGraph, public with MIT license after publication review.
 - Current target version 0.2.0-beta.1. Manual releases first create drafts; owner confirms publication.
+- Migration branch `migration/electron`, PR #1 awaits owner review/merge. Windows Server 2022 and Ubuntu 22.04 CI run `40432043548` passed tests, packaged startup, and both target formats at `8654609`. No Electron release has been published and no installed N-to-N+1 update has been verified.
 - Windows installer/Linux AppImage auto-update; ZIP/tar users download a newer package. Stable and beta channels are separate.
 - Signed manifests bind version/channel/file hashes. Private update key only in ignored Backup and GitHub SIGNING_PRIVATE_KEY secret; public key ships with app.
 - First Windows builds are unsigned publishers; independent update signatures still required.

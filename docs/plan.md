@@ -2,7 +2,7 @@
 
 ## Electron Migration - 0.2.0-beta.1
 
-Status: Implemented locally; final package verification and hosted CI in progress
+Status: Implemented; Windows/Linux hosted tests and packaging passed. Owner review and installed-upgrade acceptance remain pending.
 
 - [x] Freeze Qt source/release and preserve a private SQLite snapshot.
 - [x] Migrate core learning, templates, providers, Markdown and recycle bin.
@@ -11,7 +11,8 @@ Status: Implemented locally; final package verification and hosted CI in progres
 - [x] Add unit, migration, updater, release-tool and real Electron UI tests.
 - [x] Implement Windows/Linux packaging and guarded draft release workflows.
 - [x] Verify Linux unpacked app and final AppImage with isolated profiles; retain packages and unpacked manual-test copy in Releases.
-- [ ] Public repository review, source push and hosted Windows/Linux CI.
+- [x] Publish migration branch to the public MIT repository and open PR #1; Windows/Linux CI passed at `8654609` (run `40432043548`).
+- [ ] Owner reviews and merges migration PR #1.
 - [ ] Validate draft release artifacts; owner approval still required to publish.
 - [ ] Record actual installed Windows/Linux N-to-N+1 upgrade evidence before promoting stable.
 
@@ -25,7 +26,7 @@ Status: Source fixes verified and published privately; system security updates a
 - [x] Complete final build, tests, and x64 packages.
 - [x] Publish reviewed source to a private GitHub repository and verify visibility.
 
-Repository: https://github.com/Leos-byte/MemoryGraph (`private: true`).
+Repository: https://github.com/Leos-byte/MemoryGraph (private at that milestone; made public during the Electron migration at the user's request).
 Initial source/security commit: `4494290`.
 
 ## 2026-08-27 Menu simplification
