@@ -12,6 +12,7 @@ Status: Implemented; Windows/Linux hosted tests and packaging passed. Owner revi
 - [x] Implement Windows/Linux packaging and guarded draft release workflows.
 - [x] Verify Linux unpacked app and final AppImage with isolated profiles; retain packages and unpacked manual-test copy in Releases.
 - [x] Publish migration branch to the public MIT repository and open PR #1; Windows/Linux CI passed at `8654609` (run `40432043548`).
+- [x] Download both platforms' packages, retain unpacked manual-test copies, verify actual signed update assets, and fix the standalone verification CLI import cycle.
 - [ ] Owner reviews and merges migration PR #1.
 - [ ] Validate draft release artifacts; owner approval still required to publish.
 - [ ] Record actual installed Windows/Linux N-to-N+1 upgrade evidence before promoting stable.

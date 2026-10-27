@@ -17,6 +17,8 @@ Target: **MemGraph 0.2.0-beta.1**, Windows x64 (NSIS + zip) and Linux x64 (AppIm
 
 Both hosted jobs passed 47 release-tool tests, 45 unit tests, five real Electron UI scenarios and an isolated unpacked-application smoke test, and built their two package formats. These checks do not establish that NSIS installation, OS credentials, or an installed **N-to-N+1 upgrade** works. That upgrade has not been tested by this task. Record unavailable tests as **not run**, not passed. Do not attach private screenshots, graphs, tokens, databases, or raw provider logs as evidence.
 
+The downloaded artifacts from run `40432043548` are retained under `Releases/0.2.0-beta.1-ci-40432043548`: `packages`, `linux-unpacked`, and `win-unpacked`. Both downloaded Linux formats also passed local isolated startup checks. Seven real assets were signed locally and independently verified; this did not create or publish a GitHub Release. A subsequent standalone CLI regression adds one release-tool test (48 total). See `test/electron-acceptance-20261027.md`.
+
 ## Automated Gates
 
 - [x] `npm ci` works from the committed lockfile on both clean hosted runners.
@@ -57,9 +59,9 @@ Both hosted jobs passed 47 release-tool tests, 45 unit tests, five real Electron
 
 ## Signing And Updates
 
-- [ ] The actual packaged resources include the intended Ed25519 `update-public-key.pem`.
+- [x] The actual packaged resources include the intended Ed25519 `update-public-key.pem` (both downloaded unpacked builds; compare parsed keys because Windows checkout uses CRLF).
 - [ ] A missing signing secret does not break ordinary builds but blocks the signing/publish path. Missing public key and mismatched key pair also block publication.
-- [ ] `release-manifest.json` and `release-manifest.sig` verify against the bundled key, covering all four packages, both updater YAML files, and matching optional blockmaps.
+- [x] `release-manifest.json` and `release-manifest.sig` verify against the bundled key, covering all four packages, both updater YAML files, and matching optional blockmaps (local reviewed CI artifacts, not yet a GitHub Release).
 - [ ] Modified manifest, invalid signature, missing coverage, altered package size/hash, duplicate asset, unexpected file, and wrong channel/version are rejected before upload/install.
 - [ ] Installed NSIS/AppImage checks beta/stable channel correctly; no silent download/install, downgrade, or unverified update occurs. Portable zip/tar builds give a clear unsupported/manual update path.
 - [ ] On a test prerelease, the previous installed version discovers/downloads/verifies the update; install/relaunch preserves data. Repeat rejection testing with controlled tampered metadata. A draft alone cannot prove this flow.

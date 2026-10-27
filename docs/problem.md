@@ -1,5 +1,15 @@
 # Problem Log
 
+## 2026-10-27 - Standalone Release Verification Import Cycle
+
+- Issue: checking the downloaded, signed cross-platform packages through `release-artifacts.mjs check-signed` exited with code 13 and an unsettled top-level await.
+- Cause: the CLI dynamically imported the verifier while the verifier statically imported the same CLI module. Existing in-process tests imported the modules in a different order and missed this entry-point cycle.
+- Fix: move shared package validators to `release-package-files.mjs`, removing the cycle. Keep the CLI awaited and add a fresh-process regression covering both valid packages and same-size tampering.
+- Attempts: confirmed the CLI failure; an entry-point-only change was insufficient, so the dependency cycle was removed. The local sandbox also blocked spawned test processes with EPERM; the complete tests were rerun with permission to execute child processes.
+- Result: actual seven-asset release signature/hash validation passed; the standalone regression passed outside the restricted sandbox. Hosted regression validation follows in the migration PR.
+- Elapsed: precise time was not recorded.
+- Prevention: execute command entry points in subprocess tests, assert process errors as well as exit codes, and retain real cross-platform artifact validation before publication.
+
 ## 2026-10-27 - Windows Artifact Archiving
 
 - Issue: the first Windows CI run passed 46/47 release-tool checks but failed while invoking tar on an absolute drive-letter archive path.

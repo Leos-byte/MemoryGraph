@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,6 +43,29 @@ function fixture(t, version = '0.2.0-beta.1') {
 test('verifies the detached Ed25519 signature, six assets, sizes and SHA-512 hashes', async t => {
   const data = fixture(t);
   assert.equal((await checkSignedRelease(data)).length, 8);
+});
+
+test('standalone check-signed CLI completes verification and rejects package tampering', t => {
+  const data = fixture(t);
+  const scripts = resolve(data.root, 'DevScripts');
+  mkdirSync(scripts);
+  mkdirSync(resolve(data.root, 'Source'));
+  copyFileSync(data.publicKeyPath, resolve(data.root, 'Source/update-public-key.pem'));
+  for (const name of ['release-artifacts.mjs', 'release-package-files.mjs', 'release-metadata.mjs', 'verify-signed-release.mjs']) {
+    copyFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', name), resolve(scripts, name));
+  }
+  const run = () => spawnSync(process.execPath, [resolve(scripts, 'release-artifacts.mjs'), 'check-signed',
+    '--source', data.source, '--version', version], { encoding: 'utf8', timeout: 10000 });
+  const valid = run();
+  assert.ifError(valid.error);
+  assert.equal(valid.status, 0, valid.stderr);
+  assert.match(valid.stdout, /check-signed passed/);
+  const file = data.manifest.files[0];
+  writeFileSync(resolve(data.source, file.name), Buffer.alloc(file.size, 1));
+  const invalid = run();
+  assert.ifError(invalid.error);
+  assert.equal(invalid.status, 1, invalid.stderr);
+  assert.match(invalid.stderr, /SHA-512 mismatch/);
 });
 
 test('runtime signing script and release verifier agree', async t => {

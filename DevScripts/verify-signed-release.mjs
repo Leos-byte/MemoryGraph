@@ -2,7 +2,7 @@ import { createHash, createPublicKey, verify } from 'node:crypto';
 import { createReadStream, lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { platformAssets } from './release-artifacts.mjs';
+import { platformAssets } from './release-package-files.mjs';
 import { releaseChannel } from './release-metadata.mjs';
 
 const bundledKey = resolve(dirname(fileURLToPath(import.meta.url)), '../Source/update-public-key.pem');
