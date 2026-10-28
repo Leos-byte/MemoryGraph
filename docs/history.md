@@ -147,3 +147,7 @@ Implementation decisions:
 ## 2026-10-28 - R2 Mirror Follow-Up
 
 > R2 草稿 PR #2 要处理
+
+## 2026-10-28 - Next Release
+
+> 发release
