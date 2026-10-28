@@ -143,3 +143,7 @@ Implementation decisions:
 ## 2026-10-28 - Resume Repair Submission
 
 > 继续提交现有修复，创建 PR，CI 通过后合并，不处理 R2 草稿 PR #2。
+
+## 2026-10-28 - R2 Mirror Follow-Up
+
+> R2 草稿 PR #2 要处理

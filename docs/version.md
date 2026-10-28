@@ -1,5 +1,11 @@
 # Version History
 
+## Unreleased - Optional R2 Download Mirror
+
+- Add opt-in mirroring of published GitHub Release assets to Cloudflare R2, plus manual historical backfills. GitHub remains the updater source.
+- Restrict trusted triggers/checkout, verify existing signatures and hashes before upload, scope credentials to upload and copy the manifest last.
+- Add mirror workflow regressions and setup/recovery instructions. Actual R2 upload and domain verification require external configuration and are not claimed by mocked tests.
+
 ## Unreleased - PR Review Fixes
 
 - Share endpoint/authentication validation and origin-bound key clearing between Settings and Qt configuration import. Validate imported settings before replacing the database; clear memory and persisted credentials before saving a different provider.

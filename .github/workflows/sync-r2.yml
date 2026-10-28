@@ -17,48 +17,52 @@ permissions:
   contents: read
 
 concurrency:
-  group: r2-mirror-${{ github.event.workflow_run.id || github.event.release.tag_name || inputs.tag }}
+  group: r2-release-mirror
   cancel-in-progress: false
 
 jobs:
   mirror:
     if: >-
       github.repository == 'Leos-byte/MemoryGraph' &&
+      (github.event_name == 'workflow_dispatch' || vars.R2_MIRROR_ENABLED == 'true') &&
+      (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main') &&
       (github.event_name != 'workflow_run' ||
-       github.event.workflow_run.conclusion == 'success')
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'workflow_dispatch' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: auto
-      AWS_EC2_METADATA_DISABLED: "true"
-      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: memorygraph-releases
       DOWNLOAD_HOST: download.leoone.uk
 
     steps:
       - name: Check required credentials
         shell: bash
+        env:
+          R2_CONFIGURED: ${{ secrets.R2_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' && secrets.R2_SECRET_ACCESS_KEY != '' }}
         run: |
           set -euo pipefail
-          for key in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_ACCOUNT_ID; do
-            if [[ -z "${!key}" ]]; then
-              echo "::error::Missing required secret: $key"
-              exit 1
-            fi
-          done
+          if [[ "$R2_CONFIGURED" != "true" ]]; then
+            echo "::error::Configure R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY in repository Actions secrets."
+            exit 1
+          fi
           aws --version
           gh --version
 
-      - name: Fetch tags for release workflow matching
-        if: github.event_name == 'workflow_run'
+      - name: Check out trusted workflow code and release tags
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: refs/heads/main
           fetch-depth: 0
           persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
 
       - name: Determine published release tags
         id: tags
@@ -94,15 +98,15 @@ jobs:
 
           echo "tags_file=$RUNNER_TEMP/release-tags.txt" >> "$GITHUB_OUTPUT"
 
-      - name: Mirror published release assets
+      - name: Download and verify published release assets
+        id: verified
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
           TAGS_FILE: ${{ steps.tags.outputs.tags_file }}
         run: |
           set -euo pipefail
-          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-          mirrored=0
+          : > "$RUNNER_TEMP/verified-tags.txt"
 
           while IFS= read -r tag; do
             [[ -n "$tag" ]] || continue
@@ -125,22 +129,48 @@ jobs:
               exit 1
             fi
 
-            mkdir -p "$RUNNER_TEMP/release-files"
-            rm -f "$RUNNER_TEMP/release-files/"*
+            directory="$RUNNER_TEMP/release-files/$tag"
+            mkdir -p "$directory"
             gh release download "$tag" --repo "$GH_REPO" \
-              --dir "$RUNNER_TEMP/release-files"
+              --dir "$directory"
+            node DevScripts/release-artifacts.mjs check-signed \
+              --source "$directory" --version "${tag#v}"
+            printf '%s\n' "$tag" >> "$RUNNER_TEMP/verified-tags.txt"
+          done < "$TAGS_FILE"
+          echo "tags_file=$RUNNER_TEMP/verified-tags.txt" >> "$GITHUB_OUTPUT"
 
-            if ! find "$RUNNER_TEMP/release-files" -maxdepth 1 \
-                -type f -print -quit | grep -q .; then
-              echo "::error::Release $tag contains no assets"
-              exit 1
-            fi
+      - name: Upload verified assets to R2
+        shell: bash
+        env:
+          TAGS_FILE: ${{ steps.verified.outputs.tags_file }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: "true"
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [[ "$R2_ACCOUNT_ID" =~ ^[a-fA-F0-9]{32}$ ]] || {
+            echo "::error::R2_ACCOUNT_ID must be a 32-character account ID, not a URL."
+            exit 1
+          }
+          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          mirrored=0
+          while IFS= read -r tag; do
+            [[ -n "$tag" ]] || continue
+            directory="$RUNNER_TEMP/release-files/$tag"
 
-            # Preserve upstream signatures, manifests, and blockmaps unchanged.
-            aws s3 cp "$RUNNER_TEMP/release-files/" \
+            # Publish the signed manifest last; never execute downloaded assets.
+            aws s3 cp "$directory/" \
               "s3://${R2_BUCKET}/releases/$tag/" \
+              --exclude 'release-manifest.json' --exclude 'release-manifest.sig' \
               --recursive --endpoint-url "$endpoint" \
               --only-show-errors --no-progress
+            for name in release-manifest.sig release-manifest.json; do
+              aws s3 cp "$directory/$name" \
+                "s3://${R2_BUCKET}/releases/$tag/$name" \
+                --endpoint-url "$endpoint" --only-show-errors --no-progress
+            done
 
             echo "### Mirrored $tag" >> "$GITHUB_STEP_SUMMARY"
             while IFS= read -r -d '' file; do
@@ -149,7 +179,7 @@ jobs:
                 'import os,urllib.parse; print(urllib.parse.quote(os.environ["NAME"],safe=""))')"
               echo "- https://${DOWNLOAD_HOST}/releases/$tag/$encoded" \
                 >> "$GITHUB_STEP_SUMMARY"
-            done < <(find "$RUNNER_TEMP/release-files" -maxdepth 1 \
+            done < <(find "$directory" -maxdepth 1 \
               -type f -print0 | sort -z)
             mirrored=$((mirrored + 1))
           done < "$TAGS_FILE"

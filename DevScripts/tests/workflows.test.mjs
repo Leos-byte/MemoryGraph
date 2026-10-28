@@ -57,7 +57,8 @@ test('all workflow actions are SHA-pinned, with no issue/comment execution or se
   for (const name of readdirSync(resolve(root, '.github/workflows'))) {
     if (!/\.ya?ml$/.test(name)) continue;
     const workflow = yaml(`.github/workflows/${name}`);
-    for (const event of Object.keys(workflow.on)) assert.ok(['pull_request', 'push', 'workflow_dispatch'].includes(event), `Unexpected event: ${event}`);
+    const allowedEvents = name === 'sync-r2.yml' ? ['release', 'workflow_run', 'workflow_dispatch'] : ['pull_request', 'push', 'workflow_dispatch'];
+    for (const event of Object.keys(workflow.on)) assert.ok(allowedEvents.includes(event), `Unexpected event in ${name}: ${event}`);
     for (const job of Object.values(workflow.jobs)) {
       assert.doesNotMatch(JSON.stringify(job['runs-on']), /self-hosted/);
       for (const step of job.steps) {
@@ -66,6 +67,46 @@ test('all workflow actions are SHA-pinned, with no issue/comment execution or se
       }
     }
   }
+});
+
+test('R2 mirror is opt-in, main-owned and restricted to trusted release workflow completions', () => {
+  const workflow = yaml('.github/workflows/sync-r2.yml');
+  assert.deepEqual(Object.keys(workflow.on).sort(), ['release', 'workflow_dispatch', 'workflow_run']);
+  assert.deepEqual(workflow.on.release.types, ['published']);
+  assert.deepEqual(workflow.on.workflow_run, { workflows: ['Electron Release'], types: ['completed'] });
+  assert.equal(workflow.on.workflow_dispatch.inputs.tag.required, true);
+  assert.deepEqual(workflow.permissions, { contents: 'read' });
+  assert.deepEqual(workflow.concurrency, { group: 'r2-release-mirror', 'cancel-in-progress': false });
+  const job = workflow.jobs.mirror;
+  for (const guard of ["github.repository == 'Leos-byte/MemoryGraph'", "vars.R2_MIRROR_ENABLED == 'true'", "github.ref == 'refs/heads/main'", "github.event.workflow_run.conclusion == 'success'", "github.event.workflow_run.event == 'workflow_dispatch'", "github.event.workflow_run.head_branch == 'main'", 'github.event.workflow_run.head_repository.full_name == github.repository']) {
+    assert.ok(job.if.includes(guard), `Missing mirror guard: ${guard}`);
+  }
+  const checkout = job.steps.find(step => step.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout.with.ref, 'refs/heads/main');
+  assert.equal(checkout.with['persist-credentials'], false);
+  assert.ok(!job.steps.some(step => /npm (?:ci|install)|download-artifact/.test(JSON.stringify(step))));
+});
+
+test('R2 credentials are upload-scoped and signed verification precedes all remote writes', () => {
+  const job = yaml('.github/workflows/sync-r2.yml').jobs.mirror;
+  assert.doesNotMatch(JSON.stringify(job.env), /secrets\.|AWS_ACCESS|AWS_SECRET/);
+  const downloads = job.steps.findIndex(step => step.id === 'verified');
+  const uploads = job.steps.findIndex(step => step.env?.AWS_SECRET_ACCESS_KEY);
+  assert.ok(downloads >= 0 && uploads > downloads);
+  const download = job.steps[downloads], upload = job.steps[uploads];
+  assert.match(download.run, /gh release view/);
+  assert.match(download.run, /isDraft/);
+  assert.match(download.run, /node DevScripts\/release-artifacts\.mjs check-signed/);
+  assert.match(download.run, /--version "\$\{tag#v\}"/);
+  assert.doesNotMatch(download.run, /aws |npm |chmod|\.\/.*\.(exe|AppImage)/);
+  assert.equal(upload.env.TAGS_FILE, '${{ steps.verified.outputs.tags_file }}');
+  assert.equal(upload.env.AWS_ACCESS_KEY_ID, '${{ secrets.R2_ACCESS_KEY_ID }}');
+  assert.equal(upload.env.AWS_SECRET_ACCESS_KEY, '${{ secrets.R2_SECRET_ACCESS_KEY }}');
+  assert.equal(job.steps.filter(step => step.env?.AWS_SECRET_ACCESS_KEY).length, 1);
+  assert.match(upload.run, /\^\[a-fA-F0-9\]\{32\}\$/);
+  assert.match(upload.run, /--exclude 'release-manifest.json' --exclude 'release-manifest.sig'/);
+  assert.match(upload.run, /for name in release-manifest.sig release-manifest.json/);
+  assert.doesNotMatch(upload.run, /s3 (?:rm|sync)|--delete|gh release (?:edit|upload|delete)/);
 });
 
 test('bilingual issue form supports runtime prefill, required reproduction, optional evidence, and mail contact', () => {

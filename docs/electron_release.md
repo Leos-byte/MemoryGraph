@@ -2,6 +2,8 @@
 
 Current public prerelease: **0.2.0-beta.2**, public MIT repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. Release run `40453434325` passed; PR #1 was merged and the owner explicitly requested public publication on 2026-10-27. The publish job itself still creates only drafts. The publish job refuses a private repository. Nothing in these workflows automatically merges pull requests or makes a draft release public.
 
+Optional download mirroring is documented in [R2 Mirror](r2_mirror.md). It is opt-in, operates only on already published signed assets, and does not change the app's GitHub update source or the draft-publication approval gate.
+
 ## Local Setup
 
 Install Node.js **22 x64**, including npm. Run commands from the repository root. The wrappers resolve their own location and always run npm inside `Source`. `Source/package-lock.json` must be committed and match `Source/package.json`; setup uses `npm ci`, not an unpinned install. Do not add `--ignore-scripts`: the runtime postinstall explicitly runs `node node_modules/electron/install.js` before `electron-builder install-app-deps` to install Electron's binary. Installation may need build tools for native SQLite modules when no prebuilt binary is available.
