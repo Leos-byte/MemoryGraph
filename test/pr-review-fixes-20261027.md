@@ -13,6 +13,6 @@ Scope: API-key isolation during Qt settings import, and UTF-8 decoding of Codex 
 
 ## Merge And Publication
 
-Initial attempts were blocked by read-only `.git` access and the disabled approval policy. On 2026-10-28 approved Git/network commands succeeded, remote main was confirmed at `f4ca2a7062a196ed45e42a69918d175b454cc91d`, and the local repair branch `fix/provider-key-and-codex-utf8` was created. Submission and hosted CI verification are pending. Cloudflare R2 draft PR #2 is unrelated and remains untouched. No version tag, package or public Release is replaced by this task.
+Initial attempts were blocked by read-only `.git` access and the disabled approval policy. On 2026-10-28 approved Git/network commands succeeded, remote main was confirmed at `f4ca2a7062a196ed45e42a69918d175b454cc91d`, and the repair branch `fix/provider-key-and-codex-utf8` was submitted as [PR #3](https://github.com/Leos-byte/MemoryGraph/pull/3). Both Windows/Linux Electron CI jobs must pass before merging; the linked PR is the authoritative record of their results and the merge outcome. Cloudflare R2 draft PR #2 is unrelated and remains untouched. No version tag, package or public Release is replaced by this task.
 
 An earlier complete patch was checked against a temporary archive of the original HEAD before handoff. The repair branch and repository files are the current source of truth; the earlier temporary patch predates these progress updates.
