@@ -1,18 +1,29 @@
 # Project Plan
 
+## 0.2.0-beta.4 - Current Model Catalog
+
+Status: Owner requested current OpenAI/DeepSeek models and a new release. Catalog/default changes and regression tests are implemented; version is beta.4 with no dependency change. Saved profiles and older release artifacts remain intact. See `test/models-release-20261028.md` for current evidence.
+
+- [x] Verify official API IDs and Codex model availability documentation; preserve legacy/custom settings and provider boundaries.
+- [x] Implement shared model catalog, fresh-profile default and bilingual Flash alias label.
+- [x] Run local types/build, 94 unit tests, 56 release-tool tests and all 10 desktop scenarios. Refresh final settings screenshots after transient notices disappear.
+- [ ] Pass Windows/Linux PR CI, merge and tag the tested main.
+- [ ] Run manual release/sign/upload, independently verify draft metadata, publish beta.4 and record evidence. R2 stays off.
+- [ ] Retain tagged source/compiled backups and a clearly labeled local unpacked test build; do not claim it is byte-identical to hosted packages.
+
 ## 0.2.0-beta.3 - GitHub Prerelease
 
-Status: Owner requested publication on 2026-10-28. Version preparation is in progress; use `test/release-20261028.md` for observed evidence. Keep beta.2/tag/assets unchanged and keep R2 disabled.
+Status: Published at `2026-10-28T08:52:39Z` after PR #4 CI `40644999331` and release run `40653746249` passed. Tag/target is `3f6bfbd0a5da77b917d3a72c8e43cace18b2a4a1`. Beta.2/tag/assets remain unchanged; R2 remains unconfigured and disabled. See `test/release-20261028.md`.
 
 - [x] Prepare matching package/lock versions and release notes without dependency updates.
-- [ ] Pass Windows/Linux CI and merge the version-preparation PR.
-- [ ] Tag the tested current main and run the existing manual release workflow.
-- [ ] Verify signed assets, preserve packages/source and extracted manual-test copies locally, and publish the reviewed GitHub prerelease.
-- [ ] Record final run/SHA/artifact evidence. Do not claim real providers, OS installation or installed N-to-N+1 updating were tested.
+- [x] Pass Windows/Linux CI and merge the version-preparation PR #4.
+- [x] Tag the tested current main and run the existing manual release workflow.
+- [x] Verify all signed asset bytes in CI, independently verify downloaded metadata, and publish the reviewed nine-file GitHub prerelease. Preserve exact tagged source and the hash-verified Linux compiled archive/extracted manual-test copy locally; the full Windows/Linux installer bundle was not mirrored locally.
+- [x] Record final run/SHA/artifact evidence. Real providers, OS installation and installed N-to-N+1 updating were not tested.
 
-## Unreleased - R2 Mirror (PR #2)
+## 0.2.0-beta.3 - R2 Mirror (PR #2)
 
-Status: Owner requested processing PR #2 on 2026-10-28, superseding the earlier instruction to leave it untouched. Workflow hardening and regression tests are implemented; all 56 release-tool tests passed locally. PR #2 records the authoritative hosted CI and merge outcome. Live R2 activation is separate and requires owner-managed credentials and domain setup.
+Status: PR #2 merged at `2cfbef3` after Windows/Linux CI `40640158562` passed; its code is included in beta.3. Live R2 activation remains deferred by the owner and requires credentials/domain setup. All 56 release-tool tests passed locally; deployment is not claimed by mocked tests.
 
 - [x] Diagnose the failed workflow policy test and allow release triggers only for this mirror.
 - [x] Restrict upstream events and trusted checkout, scope credentials to upload, verify signatures/hashes before writes, and publish the manifest last.
@@ -20,7 +31,7 @@ Status: Owner requested processing PR #2 on 2026-10-28, superseding the earlier 
 - [x] Keep hosted Windows/Linux CI as the merge gate and track its result in the original PR #2: https://github.com/Leos-byte/MemoryGraph/pull/2 .
 - [ ] Owner configures bucket/domain and three R2 Secrets; run a manual beta.2 backfill, verify public downloads, then enable `R2_MIRROR_ENABLED`.
 
-## Unreleased - PR Review Fixes
+## 0.2.0-beta.3 - PR Review Fixes
 
 Status: Implementation and local verification complete (typecheck, build, 73 Linux unit tests, 8 desktop scenarios and 48 release-tooling tests). Repair submitted in [PR #3](https://github.com/Leos-byte/MemoryGraph/pull/3); the linked PR records the authoritative hosted CI and merge outcome.
 

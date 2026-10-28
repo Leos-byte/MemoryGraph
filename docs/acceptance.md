@@ -1,23 +1,23 @@
 # Electron Migration Acceptance
 
-Target: **MemGraph 0.2.0-beta.2**, Windows x64 (NSIS + zip) and Linux x64 (AppImage + tar.gz). Public prerelease authorized by the owner on 2026-10-27. Unchecked manual gates below remain open before stable promotion. Use synthetic content and an isolated test data directory. Never test migrations/restores on the only copy of a user's data. A checked box requires observed evidence, not an implemented feature or a workflow file.
+Target: **MemGraph 0.2.0-beta.3**, Windows x64 (NSIS + zip) and Linux x64 (AppImage + tar.gz). Public prerelease requested by the owner on 2026-10-28 and published at `08:52:39Z`. Unchecked manual gates below remain open before stable promotion. Use synthetic content and an isolated test data directory. Never test migrations/restores on the only copy of a user's data. A checked box requires observed evidence, not an implemented feature or a workflow file.
 
 ## Evidence Record
 
 | Field | Record before approving release |
 | --- | --- |
-| Tag / full commit SHA | `v0.2.0-beta.2` / `6a5c18a3ba5b343cada9100f11fa2dbf9e2e908e` |
-| Tester / date | Automated agent validation, 2026-10-26/27 |
+| Tag / full commit SHA | `v0.2.0-beta.3` / `3f6bfbd0a5da77b917d3a72c8e43cace18b2a4a1` |
+| Tester / date | Automated agent validation, 2026-10-28 |
 | Windows version / architecture | Windows Server 2022 x64 hosted runner; Windows 10/11 installation not run |
-| Linux distribution / architecture | Fedora 44 x64 local; Ubuntu 22.04 x64 hosted CI |
-| Windows CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40453434325; `release-packages-windows-x64`, `release-unpacked-windows-x64` |
-| Ubuntu 22.04 CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40453434325; `release-packages-linux-x64`, `release-unpacked-linux-x64` |
-| Real package smoke / upgrade evidence | Linux unpacked and final AppImage start/SQLite/graph/isolation checks passed using synthetic profiles. AppImage used extract-and-run; actual installed N-to-N+1 replacement and FUSE mode remain untested. |
+| Linux distribution / architecture | Linux x64 local; Ubuntu 22.04 x64 hosted CI |
+| Windows CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40653746249; `release-packages-windows-x64`, `release-unpacked-windows-x64` |
+| Ubuntu 22.04 CI run / artifacts | Passed: https://github.com/Leos-byte/MemoryGraph/actions/runs/40653746249; `release-packages-linux-x64`, `release-unpacked-linux-x64` |
+| Real package smoke / upgrade evidence | Downloaded, hash-verified Linux unpacked beta.3 start/SQLite/graph/isolation checks passed using a temporary profile. Actual AppImage/FUSE, NSIS installation and installed N-to-N+1 replacement remain untested. |
 | Known limitations / release notes | Windows publisher is unsigned; real provider/login, OS credential backend, NSIS installation and installed cross-version update checks remain manual release gates |
 
-Both release jobs passed 48 release-tool tests, 56 unit tests, seven real Electron UI scenarios and an isolated unpacked-application smoke test, and built their two package formats. These checks do not establish that NSIS installation, OS credentials, or an installed **N-to-N+1 upgrade** works. That upgrade has not been tested by this task. Record unavailable tests as **not run**, not passed. Do not attach private screenshots, graphs, tokens, databases, or raw provider logs as evidence.
+Both release jobs passed release-tool tests, unit tests, eight real Electron UI scenarios and isolated unpacked-application smoke, and built their two package formats. Local preflight passed 56 release-tool tests and 73 unit tests; Linux-only legacy/shell cases are skipped on Windows. These checks do not establish that NSIS installation, OS credentials, or an installed **N-to-N+1 upgrade** works. That upgrade has not been tested by this task. Record unavailable tests as **not run**, not passed. Do not attach private screenshots, graphs, tokens, databases, or raw provider logs as evidence.
 
-Historical beta.1 artifacts from run `40432043548` remain under `Releases/0.2.0-beta.1-ci-40432043548`; see `test/electron-acceptance-20261027.md`. Local beta.2 Fedora packages and an unpacked manual-test copy are also retained. The final signed Actions artifact could not be mirrored completely because of network timeouts, so it is not recorded as a downloaded-package local smoke pass. All seven package/updater assets were fully verified in CI before upload; metadata signatures, GitHub metadata digests, names and sizes were independently checked locally before publication. See `test/release-20261027.md`.
+Historical beta.1/beta.2 artifacts and backups remain untouched. Current beta.3 source/compiled backup is under `Backup/20261028-v0.2.0-beta.3`; its extracted Linux test build is under `Releases/v0.2.0-beta.3-ci-40653746249/linux-unpacked`. All seven package/updater assets were fully verified in release CI before upload. Metadata signatures, GitHub small-file digests, names and sizes were independently checked locally before publication; public asset identities/digests matched the reviewed draft. See `test/release-20261028.md`. The full installer bundle and Windows unpacked app were not mirrored locally.
 
 ## Automated Gates
 
@@ -59,7 +59,7 @@ Historical beta.1 artifacts from run `40432043548` remain under `Releases/0.2.0-
 
 ## Signing And Updates
 
-- [x] The actual packaged resources include the intended Ed25519 `update-public-key.pem` (both downloaded unpacked builds; compare parsed keys because Windows checkout uses CRLF).
+- [x] The downloaded Linux beta.3 resources include the intended Ed25519 `update-public-key.pem`, compared as parsed SPKI. Windows packaged startup passed in CI; a separate downloaded-Windows key comparison was not repeated for beta.3.
 - [ ] A missing signing secret does not break ordinary builds but blocks the signing/publish path. Missing public key and mismatched key pair also block publication.
 - [x] `release-manifest.json` and `release-manifest.sig` verify against the bundled key, covering all four packages, both updater YAML files, and matching optional blockmaps (complete byte verification in release CI; independent local metadata signature/coverage verification before public publication).
 - [ ] Modified manifest, invalid signature, missing coverage, altered package size/hash, duplicate asset, unexpected file, and wrong channel/version are rejected before upload/install.

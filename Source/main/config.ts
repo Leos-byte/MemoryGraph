@@ -4,6 +4,7 @@ import { homedir } from 'node:os';
 import { z } from 'zod';
 import { secureEndpoint } from './core';
 import type { Settings } from '../shared/types';
+import { defaultOpenAiPreset } from '../shared/models';
 
 export const settingsSchema = z.object({
   baseUrl: z.string().max(2048), model: z.string().trim().min(1).max(200),
@@ -30,7 +31,7 @@ export class Config {
   readonly path: string;
   constructor(readonly root: string) {
     this.path = join(root, 'settings.json');
-    this.settings = { baseUrl: 'https://api.openai.com', model: 'gpt-5.6-terra', apiMode: 'responses', authMode: 'api_key', language: 'system', autoGenerate: false, dataDirectory: join(root, 'data'), channel: 'stable' };
+    this.settings = { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: defaultOpenAiPreset.apiMode, authMode: 'api_key', language: 'system', autoGenerate: false, dataDirectory: join(root, 'data'), channel: 'stable' };
     if (existsSync(this.path)) this.settings = settingsSchema.parse({ ...this.settings, ...JSON.parse(readFileSync(this.path, 'utf8')) });
   }
   save(settings: Settings) { const valid = settingsSchema.parse(settings); writePrivate(this.path, JSON.stringify(valid, null, 2)); this.settings = valid; }

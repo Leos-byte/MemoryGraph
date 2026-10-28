@@ -67,3 +67,7 @@ npm run package -- --publish never
 ```
 
 跨平台发布、签名密钥备份、草稿发布及验收证据见 `electron_release.md`、`acceptance.md`。本地 Codex 修复 Issue 的操作流程见 `codex_workflow.md`。
+
+## 当前模型预设
+
+设置中的服务预设已按 2026-10-28 官方资料补充 GPT-6 系列和 `deepseek-flash`。旧 `deepseek-v4-flash` 显示为兼容别名，仍保留自定义模型输入。新建配置默认 GPT-6.1 Terra，已有配置不会被自动改写。可选项不代表当前账号必然有使用权限；ChatGPT 登录需使用支持相应模型的官方 Codex CLI 和账号，API Key 的权限与计费独立。完整模型名称及来源见 [模型核对记录](models_20261028.md)。

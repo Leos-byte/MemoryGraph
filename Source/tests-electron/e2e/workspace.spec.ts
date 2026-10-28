@@ -201,3 +201,52 @@ test('provider changes clear the previous key and block generation until replace
   await invoke('settings.save', { apiKey: 'TEST_ONLY_NEW_PROVIDER_KEY' });
   expect((await invoke<Snapshot>('snapshot')).hasKey).toBe(true);
 });
+
+test('current model presets save exact IDs and keep provider/authentication boundaries', async () => {
+  test.setTimeout(90000);
+  expect((await invoke<Snapshot>('snapshot')).settings.model).toBe('gpt-6.1-terra');
+  for (const model of ['gpt-6.1-terra', 'gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna']) {
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const dialog = page.getByTestId('settings-dialog');
+    await dialog.getByRole('combobox', { name: 'API preset', exact: true }).selectOption({ label: `OpenAI / ${model}` });
+    await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue(model);
+    await expect(dialog.getByRole('combobox', { name: 'API mode', exact: true })).toHaveValue('responses');
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    expect((await invoke<Snapshot>('snapshot')).settings.model).toBe(model);
+  }
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  let dialog = page.getByTestId('settings-dialog');
+  await dialog.getByRole('combobox', { name: 'API preset', exact: true }).selectOption({ label: 'DeepSeek / deepseek-flash' });
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  expect((await invoke<Snapshot>('snapshot')).settings).toMatchObject({ model: 'deepseek-flash', baseUrl: 'https://api.deepseek.com', apiMode: 'chat_completions', authMode: 'api_key' });
+  expect((await invoke<Snapshot>('snapshot')).hasKey).toBe(false);
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  dialog = page.getByTestId('settings-dialog');
+  await dialog.getByRole('combobox', { name: 'Authentication', exact: true }).selectOption('chatgpt_login');
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue('gpt-6.1-terra');
+  await dialog.getByRole('combobox', { name: 'API preset', exact: true }).selectOption({ label: 'OpenAI / gpt-6.1-sol' });
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  expect((await invoke<Snapshot>('snapshot')).settings).toMatchObject({ model: 'gpt-6.1-sol', baseUrl: 'https://api.openai.com', apiMode: 'responses', authMode: 'chatgpt_login' });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByTestId('settings-dialog').getByLabel('Model', { exact: true })).toHaveValue('gpt-6.1-sol');
+  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toHaveCount(0, { timeout: 10000 });
+  await page.screenshot({ path: 'test-results/models-settings-desktop.png' });
+  await page.setViewportSize({ width: 960, height: 640 });
+  await page.screenshot({ path: 'test-results/models-settings-narrow.png' });
+});
+
+test('legacy aliases are localized and custom saved model IDs are preserved', async () => {
+  await invoke('settings.save', { model: 'TEST_ONLY_CUSTOM_FUTURE_MODEL' });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  let dialog = page.getByTestId('settings-dialog');
+  await expect(dialog.getByRole('combobox', { name: 'API preset', exact: true })).toHaveValue('custom');
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue('TEST_ONLY_CUSTOM_FUTURE_MODEL');
+  await expect(dialog.getByRole('combobox', { name: 'API preset', exact: true }).getByRole('option', { name: 'DeepSeek / deepseek-v4-flash (Compatibility alias)', exact: true })).toHaveCount(1);
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await invoke('settings.save', { language: 'zh_CN' });
+  await page.getByRole('button', { name: '\u8bbe\u7f6e', exact: true }).click();
+  dialog = page.getByTestId('settings-dialog');
+  await dialog.getByRole('combobox', { name: '\u670d\u52a1\u9884\u8bbe', exact: true }).selectOption({ label: 'DeepSeek / deepseek-v4-flash (\u517c\u5bb9\u522b\u540d)' });
+  await dialog.getByRole('button', { name: '\u4fdd\u5b58', exact: true }).click();
+  expect((await invoke<Snapshot>('snapshot')).settings.model).toBe('deepseek-v4-flash');
+});
