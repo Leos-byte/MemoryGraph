@@ -1,5 +1,15 @@
 # Project Plan
 
+## 0.2.0-beta.3 - GitHub Prerelease
+
+Status: Owner requested publication on 2026-10-28. Version preparation is in progress; use `test/release-20261028.md` for observed evidence. Keep beta.2/tag/assets unchanged and keep R2 disabled.
+
+- [x] Prepare matching package/lock versions and release notes without dependency updates.
+- [ ] Pass Windows/Linux CI and merge the version-preparation PR.
+- [ ] Tag the tested current main and run the existing manual release workflow.
+- [ ] Verify signed assets, preserve packages/source and extracted manual-test copies locally, and publish the reviewed GitHub prerelease.
+- [ ] Record final run/SHA/artifact evidence. Do not claim real providers, OS installation or installed N-to-N+1 updating were tested.
+
 ## Unreleased - R2 Mirror (PR #2)
 
 Status: Owner requested processing PR #2 on 2026-10-28, superseding the earlier instruction to leave it untouched. Workflow hardening and regression tests are implemented; all 56 release-tool tests passed locally. PR #2 records the authoritative hosted CI and merge outcome. Live R2 activation is separate and requires owner-managed credentials and domain setup.

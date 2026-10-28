@@ -1,5 +1,11 @@
 # Version History
 
+## 0.2.0-beta.3 - Release Candidate - 2026-10-28
+
+- Includes merged PR #3: isolate API credentials when importing provider settings and preserve split UTF-8 Chinese/emoji in Codex output.
+- Includes merged PR #2: optional signed-asset R2 mirror with restricted triggers, upload-scoped credentials and regression coverage. R2 remains unconfigured and automatic uploads are off.
+- Bump package and lockfile metadata together, without changing dependencies. Windows/Linux x64 packaging and signed GitHub publication are tracked in `test/release-20261028.md`; not marked released until those gates finish.
+
 ## Unreleased - Optional R2 Download Mirror
 
 - Add opt-in mirroring of published GitHub Release assets to Cloudflare R2, plus manual historical backfills. GitHub remains the updater source.
