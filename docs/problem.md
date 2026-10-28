@@ -1,5 +1,12 @@
 # Problem Log
 
+## 2026-10-28 - R2 Draft CI And Activation
+
+- Issue: PR #2 failed both hosted jobs because the workflow-policy test rejected its new `release` event (`40471754022`). Existing tests were correct for the original workflows but did not cover a narrowly constrained download mirror.
+- Fix: allow the additional triggers only for `sync-r2.yml` and test their guards separately. Add tag/path, draft, missing-configuration, unsigned-download and upload-order regressions. Harden trusted main checkout, upstream workflow provenance, upload-only credential scope, signature/hash verification and serial writes.
+- Deployment prerequisite: a names-only repository secret check found no R2 credentials. Automatic mirroring stays disabled until `R2_MIRROR_ENABLED=true`; bucket/domain setup and the first live upload remain external acceptance gates. No secret values were requested or read.
+- Attempts/time: one diagnosis and implementation cycle; exact elapsed time was not measured. A failed test caused by intentionally added trigger behavior is distinct from earlier process-sandbox failures. Preserve the common policy tests and add explicit, narrow exceptions instead of removing security assertions.
+
 ## 2026-10-27 - PR Review Fix Execution
 
 - Findings: Qt settings import overwrote the API origin without clearing an existing credential; per-chunk Buffer decoding corrupted split UTF-8 characters.

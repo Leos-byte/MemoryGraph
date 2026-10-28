@@ -1,5 +1,15 @@
 # Project Plan
 
+## Unreleased - R2 Mirror (PR #2)
+
+Status: Owner requested processing PR #2 on 2026-10-28, superseding the earlier instruction to leave it untouched. Workflow hardening and regression tests are implemented; all 56 release-tool tests passed locally. PR #2 records the authoritative hosted CI and merge outcome. Live R2 activation is separate and requires owner-managed credentials and domain setup.
+
+- [x] Diagnose the failed workflow policy test and allow release triggers only for this mirror.
+- [x] Restrict upstream events and trusted checkout, scope credentials to upload, verify signatures/hashes before writes, and publish the manifest last.
+- [x] Keep automatic mirroring opt-in; document setup, costs, retries and public verification in `docs/r2_mirror.md`.
+- [x] Keep hosted Windows/Linux CI as the merge gate and track its result in the original PR #2: https://github.com/Leos-byte/MemoryGraph/pull/2 .
+- [ ] Owner configures bucket/domain and three R2 Secrets; run a manual beta.2 backfill, verify public downloads, then enable `R2_MIRROR_ENABLED`.
+
 ## Unreleased - PR Review Fixes
 
 Status: Implementation and local verification complete (typecheck, build, 73 Linux unit tests, 8 desktop scenarios and 48 release-tooling tests). Repair submitted in [PR #3](https://github.com/Leos-byte/MemoryGraph/pull/3); the linked PR records the authoritative hosted CI and merge outcome.
@@ -9,7 +19,7 @@ Status: Implementation and local verification complete (typecheck, build, 73 Lin
 - [x] Use independent UTF-8 decoders for Codex stdout and stderr.
 - [x] Add unit and UI regressions using test-only keys and no external model requests.
 - [x] Run local typecheck, build, unit tests and desktop E2E. The earlier environment-blocked GUI run was superseded by an approved successful run on 2026-10-28.
-- [x] Submit a separate repair PR with Windows/Linux CI as the merge gate; follow its live status in PR #3. Unrelated Cloudflare R2 draft PR #2 must remain unchanged.
+- [x] Merge the separate repair PR #3 after Windows/Linux CI passed (`40629772669`); local main synchronized to `d92180e`. PR #2 was left unchanged during that task and is now covered by the newer owner request above.
 
 ## 0.2.0-beta.2 - Login Lifecycle Fix
 
