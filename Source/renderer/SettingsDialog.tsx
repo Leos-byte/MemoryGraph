@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Eye, EyeOff, FolderOpen, LogIn, RefreshCw, Save, Square } from 'lucide-react';
 import type { LoginState, Settings } from '../shared/types';
+import { defaultOpenAiPreset, modelPresets as presets } from '../shared/models';
 import type { WorkspaceUI } from './workspace';
 import { ConfirmDialog, IconButton, Modal, Spinner } from './ui';
 
-const presets = [
-  ...['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'].map(model => ({ name: `OpenAI / ${model}`, baseUrl: 'https://api.openai.com', model, apiMode: 'responses' as const })),
-  ...['deepseek-v4-flash', 'deepseek-v4-pro'].map(model => ({ name: `DeepSeek / ${model}`, baseUrl: 'https://api.deepseek.com', model, apiMode: 'chat_completions' as const })),
-];
 const loginLabels = { running: 'loginWaiting', succeeded: 'loginCompleted', failed: 'loginFailed', cancelled: 'loginCancelled', timed_out: 'loginTimedOut' } as const;
 
 export function SettingsDialog({ snapshot, run, t, notify, onClose }: WorkspaceUI & { onClose: () => void }) {
@@ -59,8 +56,8 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose }: WorkspaceU
     <form onSubmit={event => { event.preventDefault(); void save(); }}>
       <div className="modal-body settings-body"><fieldset disabled={busy}>
         <h3>{t('api')}</h3>
-        <label className="field">{t('preset')}<select value={preset < 0 ? 'custom' : preset} onChange={event => { const chosen = presets[Number(event.target.value)]; if (chosen) setForm(current => ({ ...current, baseUrl: chosen.baseUrl, model: chosen.model, apiMode: chosen.apiMode, authMode: chosen.baseUrl === 'https://api.deepseek.com' ? 'api_key' : current.authMode })); }}><option value="custom">{t('custom')}</option>{presets.map((item, index) => <option key={item.name} value={index}>{item.name}</option>)}</select></label>
-        <div className="form-grid"><label className="field">{t('authMode')}<select value={form.authMode} onChange={event => { const authMode = event.target.value as Settings['authMode']; if (authMode === 'chatgpt_login') { let official = false; try { official = new URL(form.baseUrl).origin === 'https://api.openai.com'; } catch { /* Use the official preset for invalid origins. */ } setForm(current => ({ ...current, authMode, ...(official ? { apiMode: 'responses' } : { baseUrl: presets[0].baseUrl, model: presets[0].model, apiMode: 'responses' }) })); } else update('authMode', authMode); }}><option value="api_key">{t('apiKey')}</option><option value="chatgpt_login">{t('chatgpt')}</option></select></label>
+        <label className="field">{t('preset')}<select value={preset < 0 ? 'custom' : preset} onChange={event => { const chosen = presets[Number(event.target.value)]; if (chosen) setForm(current => ({ ...current, baseUrl: chosen.baseUrl, model: chosen.model, apiMode: chosen.apiMode, authMode: chosen.baseUrl === 'https://api.deepseek.com' ? 'api_key' : current.authMode })); }}><option value="custom">{t('custom')}</option>{presets.map((item, index) => <option key={item.name} value={index}>{item.name}{item.compatibilityAlias ? ` (${t('compatibilityAlias')})` : ''}</option>)}</select></label>
+        <div className="form-grid"><label className="field">{t('authMode')}<select value={form.authMode} onChange={event => { const authMode = event.target.value as Settings['authMode']; if (authMode === 'chatgpt_login') { let official = false; try { official = new URL(form.baseUrl).origin === 'https://api.openai.com'; } catch { /* Use the official preset for invalid origins. */ } setForm(current => ({ ...current, authMode, ...(official ? { apiMode: 'responses' } : { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: 'responses' }) })); } else update('authMode', authMode); }}><option value="api_key">{t('apiKey')}</option><option value="chatgpt_login">{t('chatgpt')}</option></select></label>
           <label className="field">{t('apiMode')}<select value={form.apiMode} onChange={event => update('apiMode', event.target.value as Settings['apiMode'])}><option value="responses">Responses API</option><option value="chat_completions">Chat Completions</option></select></label></div>
         <label className="field">{t('baseUrl')}<input type="url" required value={form.baseUrl} onChange={event => update('baseUrl', event.target.value)} /></label>
         <label className="field">{t('model')}<input required value={form.model} onChange={event => update('model', event.target.value)} /></label>

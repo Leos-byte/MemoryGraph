@@ -1,5 +1,16 @@
 # Project Plan
 
+## 0.2.0-beta.4 - Current Model Catalog
+
+Status: Owner requested current OpenAI/DeepSeek models and a new release. Catalog/default changes and regression tests are implemented; version is beta.4 with no dependency change. Saved profiles and older release artifacts remain intact. See `test/models-release-20261028.md` for current evidence.
+
+- [x] Verify official API IDs and Codex model availability documentation; preserve legacy/custom settings and provider boundaries.
+- [x] Implement shared model catalog, fresh-profile default and bilingual Flash alias label.
+- [x] Run local types/build, 94 unit tests, 56 release-tool tests and all 10 desktop scenarios. Refresh final settings screenshots after transient notices disappear.
+- [ ] Pass Windows/Linux PR CI, merge and tag the tested main.
+- [ ] Run manual release/sign/upload, independently verify draft metadata, publish beta.4 and record evidence. R2 stays off.
+- [ ] Retain tagged source/compiled backups and a clearly labeled local unpacked test build; do not claim it is byte-identical to hosted packages.
+
 ## 0.2.0-beta.3 - GitHub Prerelease
 
 Status: Published at `2026-10-28T08:52:39Z` after PR #4 CI `40644999331` and release run `40653746249` passed. Tag/target is `3f6bfbd0a5da77b917d3a72c8e43cace18b2a4a1`. Beta.2/tag/assets remain unchanged; R2 remains unconfigured and disabled. See `test/release-20261028.md`.

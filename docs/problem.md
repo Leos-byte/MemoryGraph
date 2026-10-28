@@ -1,5 +1,11 @@
 # Problem Log
 
+## 2026-10-28 - Native Select Regression Locators
+
+- Issue: two new model-dialog cases failed to locate a nested native select using exact `getByLabel`, although the accessibility snapshot showed the correct combobox name and choices. This was not a missing model or successful API-call failure.
+- Fix/prevention: use `getByRole('combobox', { name, exact: true })` for native selection controls in both languages; keep input-label locators for model text fields. Wait for transient Saved notices before screenshots. Give only the multi-save test a 90-second budget; other case limits remain unchanged.
+- Attempts/time: one initial failed suite (2 cases, 51.1 seconds), one locator repair and successful full rerun (10 cases, 43.8 seconds). Total interactive elapsed time was not instrumented. No production UI labeling workaround or real model call was used to mask the test failure.
+
 ## 2026-10-28 - Release Network And Local Retention
 
 - Issue: Git fetch/ls-remote and GitHub CLI queries repeatedly returned TLS EOF or connection resets. The cloud build continued successfully despite local polling failures. Root network cause was not established; disabling certificate checks or changing global DNS/proxy configuration was not attempted.

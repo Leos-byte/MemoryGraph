@@ -1,5 +1,12 @@
 # Version History
 
+## 0.2.0-beta.4 - Model Update Candidate - 2026-10-28
+
+- Add the five current GPT-6 family presets and canonical `deepseek-flash`; keep Pro and a localized old Flash compatibility alias.
+- Share preset/default metadata. Fresh profiles use GPT-6.1 Terra; saved/custom IDs are not migrated and provider key isolation is unchanged.
+- Add exact request payload, persistence, localization and desktop selection tests. No dependency updates or paid API calls. See `docs/models_20261028.md` and `test/models-release-20261028.md` for sources and observed verification.
+- Publication remains gated on Windows/Linux CI, signing and draft review; beta.3 is still the current public release at this checkpoint.
+
 ## 0.2.0-beta.3 - 2026-10-28
 
 - Includes merged PR #3: isolate API credentials when importing provider settings and preserve split UTF-8 Chinese/emoji in Codex output.

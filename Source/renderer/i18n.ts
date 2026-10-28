@@ -30,6 +30,7 @@ const messages = {
   nodeStatus: ['节点状态', 'Node status'], showMaps: ['显示地图列表', 'Show maps'], showDetails: ['显示详情', 'Show details'],
   fitView: ['适应画布', 'Fit view'], zoomIn: ['放大', 'Zoom in'], zoomOut: ['缩小', 'Zoom out'],
   api: ['模型服务', 'Model service'], preset: ['服务预设', 'API preset'], custom: ['自定义', 'Custom'],
+  compatibilityAlias: ['兼容别名', 'Compatibility alias'],
   apiKey: ['API 密钥', 'API key'], keyStored: ['已安全保存密钥', 'Key stored securely'],
   keySession: ['密钥仅在本次会话有效', 'Key available for this session only'], keyMissing: ['未配置密钥', 'No key configured'],
   replaceKey: ['留空保留现有密钥', 'Leave blank to keep the current key'], clearKey: ['清除已保存的密钥', 'Clear saved key'],

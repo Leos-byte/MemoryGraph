@@ -151,3 +151,7 @@ Implementation decisions:
 ## 2026-10-28 - Next Release
 
 > 发release
+
+## 2026-10-28 - Current Model Update And Release
+
+> openai 和 deepseek 模型更新了，请更新然后发版
