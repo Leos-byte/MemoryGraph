@@ -2,7 +2,7 @@
 
 Owner request: update OpenAI/DeepSeek models and publish. Baseline public version
 is beta.3 at `3f6bfbd`; keep prior tags, assets and user data unchanged. The earlier
-local documentation commit `334818a` is retained in this feature branch.
+local documentation commit `334818a` was preserved and merged with PR #5.
 
 ## Implementation And Sources
 
@@ -31,16 +31,49 @@ local documentation commit `334818a` is retained in this feature branch.
   `Releases/MemGraph-v0.2.0-beta.4-linux-x64-unpacked`; this is a workstation build,
   not a byte-identical copy of separately generated/signed hosted artifacts.
 
-## Publication Gates
+## Publication Evidence
 
-- [ ] Push/merge a dedicated feature PR only after Windows/Linux CI passes.
-- [ ] Tag current tested main as `v0.2.0-beta.4`; run the existing manual release workflow.
-- [ ] Verify all signed asset bytes in CI, independently check draft metadata and
+- [x] [PR #5](https://github.com/Leos-byte/MemoryGraph/pull/5) merged only after
+  Windows/Linux CI `40683763704` passed. Attempt 1's Windows native-install failure
+  was retried once without code/dependency changes; the complete retry succeeded.
+- [x] Annotated `v0.2.0-beta.4` tag and release target point to
+  `c99011580bbe46e80544c9131e417e3d4a619a58`. Source matches the tested feature build.
+- [x] [Release run 40704949356](https://github.com/Leos-byte/MemoryGraph/actions/runs/40704949356)
+  passed validate, both full builds, signing and draft upload on its first attempt.
+- [x] Verify all signed asset bytes in CI, independently check draft metadata and
   unchanged published asset identities, then publish as a prerelease.
-- [ ] Retain exact tagged source and a compiled/unpacked backup; distinguish local
+- [x] Retain exact tagged source and a compiled/unpacked backup; distinguish local
   workstation builds from the separately signed hosted release packages.
-- [ ] Record final PR/run/SHA/publication time and local test paths.
+- [x] Record final PR/run/SHA/publication time and local test paths.
 
-No beta.4 tag, draft or public publication is claimed at this preparation checkpoint.
+Public state confirmed: `isDraft=false`, `isPrerelease=true`, published at
+`2026-10-28T14:32:24Z`, with all nine asset IDs, sizes, GitHub digests and upload
+states matching the reviewed draft. Release:
+https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.4 .
+
+Local small-file checks verified the exact Ed25519-signed manifest bytes, base64
+signature, version/channel, all required Windows/Linux package/updater names and
+sizes, signed blockmap coverage, GitHub SHA-256 digests for both metadata and YAML
+files, YAML SHA-512 hashes and package references. The complete cross-platform
+installer hashes were independently checked by sign/upload jobs in CI, not by
+downloading all installers locally.
+
+## Retention
+
+- `Releases/v0.2.0-beta.4-github-metadata`: downloaded metadata/YAML and before/after
+  publication JSON records. These are not a full installer-bundle mirror.
+- `Releases/MemGraph-v0.2.0-beta.4-linux-x64-unpacked`: locally built application;
+  isolated startup/SQLite/graph smoke passed, parsed SPKI equals the bundled
+  source public key and executable mode is preserved. Screenshots were inspected.
+- `Backup/20261028-v0.2.0-beta.4/source.tar.gz`: exact tagged source, SHA-256
+  `a1d31c02b781f2cf36e7ac7ebb1bb3aa6cd6cc31f6e7f207bf67187a4ddb5def`.
+- Same backup directory contains the local compiled
+  `MemGraph-0.2.0-beta.4-linux-x64-unpacked.tar.gz`, SHA-256
+  `d05dd66f829f454b146bee456954dca7954bd79d4885ff92e305269584ef62e8`.
+
+## Remaining Manual Gates
+
 Real providers/login, NSIS installation, AppImage/FUSE, target keyrings and installed
 N-to-N+1 updating remain manual checks. R2 configuration/upload remains deferred.
+Observed R2 runs `40706505941` (release-workflow completion) and `40706936935`
+(publication event) both completed as `skipped`; no mirror upload was activated.

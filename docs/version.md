@@ -1,11 +1,12 @@
 # Version History
 
-## 0.2.0-beta.4 - Model Update Candidate - 2026-10-28
+## 0.2.0-beta.4 - 2026-10-28
 
 - Add the five current GPT-6 family presets and canonical `deepseek-flash`; keep Pro and a localized old Flash compatibility alias.
 - Share preset/default metadata. Fresh profiles use GPT-6.1 Terra; saved/custom IDs are not migrated and provider key isolation is unchanged.
 - Add exact request payload, persistence, localization and desktop selection tests. No dependency updates or paid API calls. See `docs/models_20261028.md` and `test/models-release-20261028.md` for sources and observed verification.
-- Publication remains gated on Windows/Linux CI, signing and draft review; beta.3 is still the current public release at this checkpoint.
+- Published prerelease: https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.4 at `2026-10-28T14:32:24Z`. PR #5 merged/tagged at `c99011580bbe46e80544c9131e417e3d4a619a58`; CI `40683763704` passed after retrying the failed Windows native install, and formal release run `40704949356` passed both platforms, signing and upload on its first attempt.
+- Independently verified draft signature, asset coverage, small-file digests and updater hashes; all nine published asset identities/digests remained unchanged. A local Linux unpacked test build and source/compiled backups are retained. Prior versions are unchanged; R2 remains off and real provider/account calls were not tested.
 
 ## 0.2.0-beta.3 - 2026-10-28
 

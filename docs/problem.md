@@ -1,5 +1,12 @@
 # Problem Log
 
+## 2026-10-28 - Windows Native Install During Model PR CI
+
+- Issue: PR CI `40683763704` attempt 1 failed before tests, while `node-gyp 12.4.0` compiled unchanged `better-sqlite3 13.0.3` under Node `22.23.4`/Python `3.15.1`. Reported `Completion callback never invoked`; the precise underlying cause was not proven. Linux passed.
+- Handling: retry only failed jobs once, with the same commit/dependencies and no skipped install scripts or security checks. Windows then passed every test, smoke and package step; its successful attempt lasted 6m28s. Formal release `40704949356` subsequently passed both platforms and all signing/upload gates on the first attempt.
+- Attempts/time: one failed Windows job (5m52s), one successful failed-job rerun, no dependency/configuration changes. Interactive waiting was not instrumented.
+- Prevention: distinguish native-install failures from application/model test failures; retain the failed log and require full successful platform checks before merge. If the same failure persists after one bounded retry, inspect the runner toolchain/download logs and make a reviewed environment fix rather than repeatedly retrying, skipping native modules or publishing Linux-only results as cross-platform validation.
+
 ## 2026-10-28 - Native Select Regression Locators
 
 - Issue: two new model-dialog cases failed to locate a nested native select using exact `getByLabel`, although the accessibility snapshot showed the correct combobox name and choices. This was not a missing model or successful API-call failure.
