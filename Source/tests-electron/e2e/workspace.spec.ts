@@ -190,3 +190,14 @@ test('relationship generation errors remain visible without corrupting login sta
   await expect(page.getByText('HTTP 429: Synthetic relation failure', { exact: true })).toBeVisible();
   expect((await invoke<LoginState>('codex.loginState')).status).toBe('idle');
 });
+
+test('provider changes clear the previous key and block generation until replaced', async () => {
+  const map = await invoke('map.create', { title: 'Provider credentials' });
+  const node = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Keep provider keys isolated' });
+  expect((await invoke<Snapshot>('snapshot')).hasKey).toBe(true);
+  await invoke('settings.save', { baseUrl: 'https://api.deepseek.com', model: 'deepseek-v4-pro', apiMode: 'chat_completions' });
+  expect((await invoke<Snapshot>('snapshot')).hasKey).toBe(false);
+  await expect(invoke('node.generate', { id: node.id })).rejects.toThrow('API key');
+  await invoke('settings.save', { apiKey: 'TEST_ONLY_NEW_PROVIDER_KEY' });
+  expect((await invoke<Snapshot>('snapshot')).hasKey).toBe(true);
+});

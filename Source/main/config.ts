@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { z } from 'zod';
+import { secureEndpoint } from './core';
 import type { Settings } from '../shared/types';
 
 export const settingsSchema = z.object({
@@ -10,6 +11,14 @@ export const settingsSchema = z.object({
   language: z.enum(['system', 'zh_CN', 'en_US']), autoGenerate: z.boolean(),
   dataDirectory: z.string().min(1).max(4096), channel: z.enum(['stable', 'beta'])
 });
+export function validateSettings(values: unknown): Settings {
+  const next = settingsSchema.parse(values);
+  secureEndpoint(next.baseUrl, next.apiMode);
+  if (next.authMode === 'chatgpt_login' && (new URL(next.baseUrl).origin !== 'https://api.openai.com' || next.apiMode !== 'responses')) {
+    throw new Error('ChatGPT login requires OpenAI and Responses API.');
+  }
+  return next;
+}
 export function writePrivate(path: string, data: string | Buffer) {
   mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   const temporary = `${path}.tmp`;
@@ -25,6 +34,18 @@ export class Config {
     if (existsSync(this.path)) this.settings = settingsSchema.parse({ ...this.settings, ...JSON.parse(readFileSync(this.path, 'utf8')) });
   }
   save(settings: Settings) { const valid = settingsSchema.parse(settings); writePrivate(this.path, JSON.stringify(valid, null, 2)); this.settings = valid; }
+}
+export async function applySettings(config: Config, changes: Record<string, unknown>, actions: {
+  changeDirectory: (directory: string) => Promise<void>;
+  storeKey: (key: string) => Promise<void>;
+}) {
+  const next = validateSettings({ ...config.settings, ...changes });
+  const apiKey = changes.apiKey === undefined ? undefined : z.string().max(4096).parse(changes.apiKey).trim();
+  const before = new URL(config.settings.baseUrl), after = new URL(next.baseUrl);
+  await actions.changeDirectory(next.dataDirectory);
+  if (before.origin !== after.origin || changes.clearKey === true) await actions.storeKey('');
+  if (apiKey) await actions.storeKey(apiKey);
+  config.save(next);
 }
 export function legacyInfo(): { database: string | null; settings: Partial<Settings> } {
   const home = homedir();

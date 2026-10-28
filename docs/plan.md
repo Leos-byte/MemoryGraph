@@ -1,5 +1,16 @@
 # Project Plan
 
+## Unreleased - PR Review Fixes
+
+Status: Implementation and local verification complete (typecheck, build, 73 Linux unit tests, 8 desktop scenarios and 48 release-tooling tests). Repair submitted in [PR #3](https://github.com/Leos-byte/MemoryGraph/pull/3); the linked PR records the authoritative hosted CI and merge outcome.
+
+- [x] Route normal settings and imported Qt settings through the same endpoint validation and key-clearing policy.
+- [x] Validate imported settings before database replacement and preserve credentials for unchanged origins.
+- [x] Use independent UTF-8 decoders for Codex stdout and stderr.
+- [x] Add unit and UI regressions using test-only keys and no external model requests.
+- [x] Run local typecheck, build, unit tests and desktop E2E. The earlier environment-blocked GUI run was superseded by an approved successful run on 2026-10-28.
+- [x] Submit a separate repair PR with Windows/Linux CI as the merge gate; follow its live status in PR #3. Unrelated Cloudflare R2 draft PR #2 must remain unchanged.
+
 ## 0.2.0-beta.2 - Login Lifecycle Fix
 
 Status: Released as public prerelease v0.2.0-beta.2 on 2026-10-27. Release run `40453434325` passed both platforms; remaining manual upgrade/OS checks are not claimed complete.

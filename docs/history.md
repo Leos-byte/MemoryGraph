@@ -133,3 +133,13 @@ Implementation decisions:
 > 什么意思
 
 > 继续
+
+## 2026-10-27 - Review Repair Approval
+
+> 再检查一次pr
+
+> 修复并合并
+
+## 2026-10-28 - Resume Repair Submission
+
+> 继续提交现有修复，创建 PR，CI 通过后合并，不处理 R2 草稿 PR #2。
