@@ -4,10 +4,10 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { Config, legacyInfo, settingsSchema, writePrivate } from './config';
+import { applySettings, Config, legacyInfo, validateSettings, writePrivate } from './config';
 import { Store, importDatabase } from './store';
 import { apiGenerate, codexGenerate, runCodex } from './ai';
-import { feedbackText, feedbackUrl, renderTemplate, REPOSITORY, secureEndpoint, upsertRelation } from './core';
+import { feedbackText, feedbackUrl, renderTemplate, REPOSITORY, upsertRelation } from './core';
 import { Updates } from './updates';
 import { LoginSession } from './login';
 import { commands, type Command, type Id, type Settings, type Snapshot } from '../shared/types';
@@ -127,11 +127,12 @@ async function chooseAndImport(source?: string) {
   if (!path) return false;
   const destination = join(config.settings.dataDirectory, 'memgraph.sqlite3');
   if (resolve(path) === resolve(destination)) throw new Error('Choose a different source database.');
+  const importedSettings = path === legacy.database ? validateSettings({ ...config.settings, ...legacy.settings }) : undefined;
   if (!(await confirm('Import this database? Current data will be backed up; the source will remain unchanged. / 导入前备份当前数据，原数据库保持不变。'))) return false;
   await backup('before-import'); cancelAll(); store.close();
   try {
     await importDatabase(path, destination);
-    if (path === legacy.database) config.save({ ...config.settings, ...legacy.settings });
+    if (importedSettings) await applySettings(config, { ...importedSettings }, { changeDirectory, storeKey });
   }
   finally { store = new Store(destination); recoverInterrupted(); selectedMap = null; changed(); }
   return true;
@@ -179,14 +180,7 @@ async function handle(command: Command, p: Record<string, unknown>): Promise<unk
     case 'trash.restore': store.restore(z.enum(['maps', 'nodes', 'templates']).parse(p.kind), id(p.id)); break;
     case 'trash.empty': await backup('before-empty-trash'); store.emptyTrash(); break;
     case 'settings.save': {
-      const values = { ...config.settings, ...p }; delete (values as any).apiKey; delete (values as any).clearKey;
-      const next = settingsSchema.parse(values); secureEndpoint(next.baseUrl, next.apiMode);
-      if (next.authMode === 'chatgpt_login' && (new URL(next.baseUrl).origin !== 'https://api.openai.com' || next.apiMode !== 'responses')) throw new Error('ChatGPT login requires OpenAI and Responses API.');
-      const before = new URL(config.settings.baseUrl), after = new URL(next.baseUrl);
-      await changeDirectory(next.dataDirectory);
-      if (before.origin !== after.origin || p.clearKey === true) await storeKey('');
-      if (p.apiKey !== undefined && String(p.apiKey).trim()) await storeKey(text(p.apiKey, 4096));
-      config.save(next); break;
+      await applySettings(config, p, { changeDirectory, storeKey }); break;
     }
     case 'data.choose': return (await dialog.showOpenDialog(window, { properties: ['openDirectory', 'createDirectory'] })).filePaths[0] || null;
     case 'data.import': return chooseAndImport(p.path && legacy.database === p.path ? legacy.database : undefined);

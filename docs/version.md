@@ -1,5 +1,11 @@
 # Version History
 
+## Unreleased - PR Review Fixes
+
+- Share endpoint/authentication validation and origin-bound key clearing between Settings and Qt configuration import. Validate imported settings before replacing the database; clear memory and persisted credentials before saving a different provider.
+- Decode Codex stdout/stderr as independent UTF-8 streams, preserving Chinese and emoji split across byte chunks.
+- Add settings/legacy-configuration and UTF-8 boundary regressions. These changes do not replace the already published v0.2.0-beta.2 packages.
+
 ## 0.2.0-beta.2 - 2026-10-27 - Login Session Recovery
 
 - First public Electron prerelease: https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.2 . PR #1 merged; tag points to `6a5c18a3ba5b343cada9100f11fa2dbf9e2e908e`. Windows/Linux release run `40453434325` passed.

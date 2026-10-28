@@ -39,6 +39,29 @@ describe('Codex process lifecycle', () => {
     expect(holder.child.kill).not.toHaveBeenCalled();
   });
 
+  it.each(['stdout', 'stderr'])('decodes split Chinese and emoji bytes on %s without replacement characters', async stream => {
+    const output = vi.fn();
+    const pending = runCodex(['login'], '', new AbortController().signal, output);
+    const text = '\x1b[90m\u6388\u6743\u7801\uff1aTEST \u{1f642}\x1b[0m\n\u767b\u5f55\u6210\u529f';
+    for (const byte of Buffer.from(text, 'utf8')) holder.child[stream].write(Buffer.from([byte]));
+    holder.child[stream].end();
+    holder.child.emit('close', 0);
+    await expect(pending).resolves.toEqual({ output: '\u6388\u6743\u7801\uff1aTEST \u{1f642}\n\u767b\u5f55\u6210\u529f', code: 0 });
+    expect(output).toHaveBeenLastCalledWith('\u6388\u6743\u7801\uff1aTEST \u{1f642}\n\u767b\u5f55\u6210\u529f');
+    expect(output.mock.calls.every(([text]) => !text.includes('\ufffd'))).toBe(true);
+  });
+
+  it('keeps stdout and stderr decoders independent when partial characters interleave', async () => {
+    const pending = runCodex(['login'], '', new AbortController().signal);
+    const first = Buffer.from('\u4e2d'), second = Buffer.from('\u{1f642}');
+    holder.child.stdout.write(first.subarray(0, 1));
+    holder.child.stderr.write(second.subarray(0, 2));
+    holder.child.stdout.write(first.subarray(1));
+    holder.child.stderr.write(second.subarray(2));
+    holder.child.emit('close', 0);
+    await expect(pending).resolves.toEqual({ output: '\u4e2d\u{1f642}', code: 0 });
+  });
+
   it('escalates cancellation if a process ignores termination and then clears timers', async () => {
     const abort = new AbortController();
     const pending = runCodex(['login'], '', abort.signal);
