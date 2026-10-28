@@ -64,7 +64,8 @@ export function runCodex(args: string[], input: string, signal: AbortSignal, onO
     const timeout = setTimeout(stop, 600000);
     const abort = stop; signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) stop();
-    const append = (chunk: Buffer) => { rawOutput = (rawOutput + chunk.toString('utf8')).slice(-16384); onOutput?.(stripTerminal(rawOutput)); };
+    const append = (chunk: string) => { rawOutput = (rawOutput + chunk).slice(-16384); onOutput?.(stripTerminal(rawOutput)); };
+    child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
     child.stdout.on('data', append); child.stderr.on('data', append);
     child.stdin.on('error', () => {}); child.stdin.end(input);
     const cleanup = () => { clearTimeout(timeout); if (killTimer) clearTimeout(killTimer); signal.removeEventListener('abort', abort); };

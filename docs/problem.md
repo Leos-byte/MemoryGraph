@@ -1,5 +1,15 @@
 # Problem Log
 
+## 2026-10-27 - PR Review Fix Execution
+
+- Findings: Qt settings import overwrote the API origin without clearing an existing credential; per-chunk Buffer decoding corrupted split UTF-8 characters.
+- Fix: common validate/apply settings helpers, import preflight before database replacement, and separate stdout/stderr UTF-8 stream decoders. Add regressions for old/new provider keys, invalid endpoints, Qt configuration parsing, and Chinese/emoji byte boundaries.
+- Environment: local `.git` writes and GitHub CLI networking were unavailable. The connected GitHub API could read the repository, but tree creation was explicitly rejected because approval policy is never. No remote commit, branch, repair PR or merge was created, and local Git permissions were not changed.
+- Validation: local unit tests use the supported threads pool. Desktop E2E launch failed with `sandbox_host_linux.cc` / EPERM; production/test sandbox settings were not weakened to work around the execution environment. Hosted CI is the GUI validation gate.
+- Attempts: one implementation and local regression cycle; one blocked Git branch attempt, one blocked CLI query, successful connector reads, and one rejected connector tree-write request. Precise elapsed time was not recorded.
+- Prevention: apply the same credential policy to every provider-changing entry point and exercise multibyte stream boundaries explicitly. Distinguish environment-blocked GUI runs from successful application tests.
+- Follow-up (2026-10-28): after enabling approval requests, approved Git/network commands and Electron execution succeeded without weakening application sandbox settings. All 8 desktop scenarios passed. The signing-tool test also passed outside the restricted process sandbox (19 cases); its earlier restricted failure was environmental. The repeated approval failures are handled by checking the effective approval policy and requesting the necessary command permissions, not retrying identical writes or changing filesystem protection.
+
 ## 2026-10-27 - Local Release Artifact Mirroring
 
 - Issue: the 585,784,363-byte signed Actions archive could not be downloaded completely to this machine. Multiple connections timed out after 20 seconds or transferred only partial chunks before their 120-second limit.
