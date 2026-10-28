@@ -1,10 +1,10 @@
 # Electron Release
 
-Current public prerelease: **0.2.0-beta.2**, public MIT repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. Release run `40453434325` passed; PR #1 was merged and the owner explicitly requested public publication on 2026-10-27. The publish job itself still creates only drafts. The publish job refuses a private repository. Nothing in these workflows automatically merges pull requests or makes a draft release public.
+Current public prerelease: [**0.2.0-beta.3**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.3), public MIT repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. Release run `40653746249` passed after version PR #4; tag/target is `3f6bfbd0a5da77b917d3a72c8e43cace18b2a4a1`. The owner requested publication on 2026-10-28, and the reviewed nine-file draft was separately published at `08:52:39Z`. The workflow itself still creates only drafts and refuses a private repository. No automatic merge or draft-publication policy was enabled.
 
 Optional download mirroring is documented in [R2 Mirror](r2_mirror.md). It is opt-in, operates only on already published signed assets, and does not change the app's GitHub update source or the draft-publication approval gate.
 
-Release candidate `0.2.0-beta.3` was requested on 2026-10-28. See [release notes](release_notes_0.2.0-beta.3.md) and [verification record](../test/release-20261028.md); this candidate is not public until the recorded publication gates complete.
+See [release notes](release_notes_0.2.0-beta.3.md) and [verification record](../test/release-20261028.md). The downloaded Linux unpacked build is retained under `Releases/v0.2.0-beta.3-ci-40653746249/linux-unpacked`; its isolated startup/SQLite/graph smoke passed. The full installer bundle and Windows unpacked app were not downloaded locally. Historical beta.2 packages and archives remain unchanged.
 
 ## Local Setup
 
@@ -49,8 +49,8 @@ The runtime owner maintains `Source/electron-builder.yml`. All new packages go t
 
 | Platform | Required artifacts |
 | --- | --- |
-| Windows x64 | `MemGraph-0.2.0-beta.2-windows-x64-setup.exe`, `MemGraph-0.2.0-beta.2-windows-x64.zip`, `beta.yml` |
-| Linux x64 | `MemGraph-0.2.0-beta.2-linux-x86_64.AppImage`, `MemGraph-0.2.0-beta.2-linux-x64.tar.gz`, `beta-linux.yml` |
+| Windows x64 | `MemGraph-0.2.0-beta.3-windows-x64-setup.exe`, `MemGraph-0.2.0-beta.3-windows-x64.zip`, `beta.yml` |
+| Linux x64 | `MemGraph-0.2.0-beta.3-linux-x86_64.AppImage`, `MemGraph-0.2.0-beta.3-linux-x64.tar.gz`, `beta-linux.yml` |
 
 Matching `.blockmap` files, when generated, travel with those packages. `win-unpacked` and `linux-unpacked` are archived separately for testing, preserving file modes. Builder debug files, private keys, user data, and unpacked directories are not GitHub release assets.
 
@@ -76,7 +76,7 @@ The runtime-owned command for the initial beta is:
 
 ```bash
 # Run inside Source, with SIGNING_PRIVATE_KEY securely supplied in the environment.
-npm run release:sign -- --dir dist-release --version 0.2.0-beta.2 --channel beta
+npm run release:sign -- --dir dist-release --version 0.2.0-beta.3 --channel beta
 ```
 
 The workflow infers and passes `--channel stable` for a stable version such as `0.2.0`; this is not a free-form dispatch input that can disagree with the tag/package.
@@ -90,14 +90,14 @@ Changing the bundled public key breaks verification for clients that trust only 
 ## Manual Release
 
 1. Complete [acceptance.md](acceptance.md), review the diff, and manually merge the tested change. Confirm public visibility, the MIT license, the bundled key, the signing secret, and the feedback email. Require the two platform checks through branch protection if available. Protect `v*` tags from movement/deletion through repository rules.
-2. Ensure the version in `Source/package.json`, `Source/package-lock.json`, and the lockfile root package agrees. Version `0.2.0-beta.2` is already public and must not be overwritten. Use a new version for each subsequent beta/stable release, matching builder metadata to its inferred channel. Commit these changes before tagging; the following example assumes a future `0.2.0-beta.3` version bump has already been merged.
+2. Ensure the version in `Source/package.json`, `Source/package-lock.json`, and the lockfile root package agrees. Versions `0.2.0-beta.2` and `0.2.0-beta.3` are public and must not be overwritten. Use a new version for each subsequent beta/stable release, matching builder metadata to its inferred channel. Commit these changes before tagging; the following example assumes a future `0.2.0-beta.4` version bump has already been merged.
 3. Fetch and inspect `origin/main`; create and push an existing tag at its **current HEAD**. For example, after the intended commit is on `main`:
 
 ```bash
 git fetch origin main --tags
-git tag -a v0.2.0-beta.3 origin/main -m "MemGraph 0.2.0-beta.3"
-git push origin refs/tags/v0.2.0-beta.3
-gh workflow run electron-release.yml --ref main -f tag=v0.2.0-beta.3
+git tag -a v0.2.0-beta.4 origin/main -m "MemGraph 0.2.0-beta.4"
+git push origin refs/tags/v0.2.0-beta.4
+gh workflow run electron-release.yml --ref main -f tag=v0.2.0-beta.4
 ```
 
 4. Dispatch **on `main`**, not on the tag. Validation requires the canonical repository, manual event, matching full SHA, existing lightweight/annotated tag at `main` HEAD, and matching package/lock versions. There are no tag-push, issue, comment, `pull_request_target`, `workflow_run`, or self-hosted-runner publishing triggers.

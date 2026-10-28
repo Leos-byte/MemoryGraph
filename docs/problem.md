@@ -1,5 +1,14 @@
 # Problem Log
 
+## 2026-10-28 - Release Network And Local Retention
+
+- Issue: Git fetch/ls-remote and GitHub CLI queries repeatedly returned TLS EOF or connection resets. The cloud build continued successfully despite local polling failures. Root network cause was not established; disabling certificate checks or changing global DNS/proxy configuration was not attempted.
+- Handling: stop dependent mutations after failed reads; use bounded read retries and reconcile live draft/published state before retrying publication. Track the existing workflow through the GitHub connector rather than dispatching duplicate builds. A one-command HTTP/1.1 Git trial did not resolve the outage; a later normal fetch succeeded.
+- Download: the first Linux unpacked archive download timed out after 300 seconds at 83,525,632 bytes. A one-byte Range probe confirmed resumability (first probe hit a reset, second succeeded); one bounded 600-second remainder download completed. Combining both parts matched GitHub's full 141,879,248-byte ZIP SHA-256 before extraction. No incomplete archive was extracted.
+- Process sandbox: Node's nested unzip invocation reported EPERM even with captured status/output. Continue using approved direct unzip/tar commands rather than interpreting that exception as a test pass. The final extracted app's isolated smoke then passed.
+- Attempts/time: three initial Git fetch attempts (including HTTP/1.1) failed, followed by a successful continuation; subsequent read retries were capped at three per operation. Archive transfer limits were 300 and 600 seconds; total interactive wall time was not instrumented. Publication was retried only after checking it was still a draft; the confirmed successful publish was not repeated.
+- Prevention: separate network/polling failures from cloud job failures, retain partial downloads, probe Range support, require complete byte length and transport hash before extracting, and distinguish CI full-package verification from local metadata/unpacked checks. Preserve exact tagged source/compiled backups without cleaning old Releases or user data.
+
 ## 2026-10-28 - R2 Draft CI And Activation
 
 - Issue: PR #2 failed both hosted jobs because the workflow-policy test rejected its new `release` event (`40471754022`). Existing tests were correct for the original workflows but did not cover a narrowly constrained download mirror.

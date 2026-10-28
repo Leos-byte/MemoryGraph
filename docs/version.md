@@ -1,18 +1,19 @@
 # Version History
 
-## 0.2.0-beta.3 - Release Candidate - 2026-10-28
+## 0.2.0-beta.3 - 2026-10-28
 
 - Includes merged PR #3: isolate API credentials when importing provider settings and preserve split UTF-8 Chinese/emoji in Codex output.
 - Includes merged PR #2: optional signed-asset R2 mirror with restricted triggers, upload-scoped credentials and regression coverage. R2 remains unconfigured and automatic uploads are off.
-- Bump package and lockfile metadata together, without changing dependencies. Windows/Linux x64 packaging and signed GitHub publication are tracked in `test/release-20261028.md`; not marked released until those gates finish.
+- Published prerelease: https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.3 . Tag points to `3f6bfbd0a5da77b917d3a72c8e43cace18b2a4a1`; release run `40653746249` passed both platforms, signing and upload. Nine files were published unchanged at `2026-10-28T08:52:39Z`.
+- Package and lockfile versions match, without dependency changes. Independently verified signed metadata and the downloaded Linux unpacked artifact; its isolated startup/SQLite/graph smoke passed. See `test/release-20261028.md` for local paths and untested manual gates.
 
-## Unreleased - Optional R2 Download Mirror
+## 0.2.0-beta.3 - Optional R2 Download Mirror Details
 
 - Add opt-in mirroring of published GitHub Release assets to Cloudflare R2, plus manual historical backfills. GitHub remains the updater source.
 - Restrict trusted triggers/checkout, verify existing signatures and hashes before upload, scope credentials to upload and copy the manifest last.
 - Add mirror workflow regressions and setup/recovery instructions. Actual R2 upload and domain verification require external configuration and are not claimed by mocked tests.
 
-## Unreleased - PR Review Fixes
+## 0.2.0-beta.3 - PR Review Fix Details
 
 - Share endpoint/authentication validation and origin-bound key clearing between Settings and Qt configuration import. Validate imported settings before replacing the database; clear memory and persisted credentials before saving a different provider.
 - Decode Codex stdout/stderr as independent UTF-8 streams, preserving Chinese and emoji split across byte chunks.
