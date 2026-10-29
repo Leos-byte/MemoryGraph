@@ -3,9 +3,12 @@
 ## 1.0.0-beta.2 - 2026-10-30
 
 - Publish the additive Snow Leopard skin with immediate isolated theme persistence, startup seeding and safe stored-ID fallback; preserve Calico defaults/layout and existing workflows.
-- Package/lock versions match without dependency changes. Signed Windows/Linux installer and portable builds are being verified before publication; evidence will be in `test/release-1.0.0-beta.2.md`.
+- Package/lock versions match without dependency changes. Published https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.2 at `2026-10-29T18:05:44Z` (2026-10-30 in Asia/Shanghai).
+- PR #7 / tag target `161f877fe7762752974b7856d4e78310b34763cc`; PR CI `40924484539` and formal build/sign/upload `40925967111` passed both platforms on the first attempt. Independent draft/public signature and nine-file identity verification passed. Retain tagged source, local compiled backup and unpacked manual-test app; previous backups/releases remain intact. See `test/release-1.0.0-beta.2.md` for evidence and manual gates.
 
-## Unreleased - Snow Leopard
+## Snow Leopard Implementation Record - 2026-10-29
+
+The following records the implementation-only milestone, subsequently published in beta.2 above.
 
 - Add scoped `snow-leopard` skin, registry and persisted selector; Calico remains default, its values/layout unchanged.
 - Skin alone autosaves immediately, survives restart and rolls back on failed write. Unknown stored IDs safely fall back; invalid requests reject.

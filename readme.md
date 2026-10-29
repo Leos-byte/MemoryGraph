@@ -4,7 +4,7 @@
 
 理解、连接、记忆与迁移。输入概念生成 Markdown 解释，在解释中选择陌生内容继续展开，构建保存在本机的知识地图。
 
-最新大版本测试版：[**1.0.0-beta.1 - Calico**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.1)，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
+最新测试版：[**1.0.0-beta.2 - Snow Leopard**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.2)，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
 
 ## 下载与反馈
 
@@ -34,13 +34,15 @@ Qt 原版冻结在 `qt-v0.1.0-frozen` 标签。首次导入会复制旧 SQLite �
 
 Windows 安装版和 Linux AppImage 支持检查更新、校验、下载和重启应用。ZIP/解压版提供新版下载入口。更新清单使用独立 Ed25519 签名，数据库迁移前创建快照；失败恢复路径见 [使用说明](docs/usage.md)。
 
-1.0 支持在设置中选择“仅手动更新 / 自动检查更新 / 自动检查并下载”，安装前仍需确认重启并自动备份数据。接收本测试版需启用 Beta 通道；解压版仍需手动下载替换。验证及限制见 [发布记录](test/release-1.0.0-beta.1.md)。
+1.0 支持在设置中选择“仅手动更新 / 自动检查更新 / 自动检查并下载”，安装前仍需确认重启并自动备份数据。接收本测试版需启用 Beta 通道；解压版仍需手动下载替换。验证及限制见 [发布记录](test/release-1.0.0-beta.2.md)。
 
 1.0 界面采用 Calico 亮色设计，统一奶油白、杏橘与炭黑的语义化 Tokens，保留工作台布局、中英文和原有业务功能。设计规则见 [Calico 说明](docs/calico_design.md)。旧版 Backup 源码/程序目录已按要求清理，保留本版本备份、独立数据库备份及更新签名私钥；GitHub 历史版本未删除。
 
-## 目录
+## 皮肤
 
-1.0.0-beta.2 新增独立的“雪豹 Snow Leopard”皮肤，可在“设置 > 通用 > 皮肤”即时切换并自动保存；Calico 仍为默认。其他设置草稿不会随皮肤提交，原有布局不变。接入与扩展方式见 [皮肤说明](docs/themes.md)，验证记录见 [雪豹测试](test/snow-leopard-20261029.md)，发布进度见 [发布记录](test/release-1.0.0-beta.2.md)。beta.1 包不包含此选择器。
+1.0.0-beta.2 新增独立的“雪豹 Snow Leopard”皮肤，可在“设置 > 通用 > 皮肤”即时切换并自动保存；Calico 仍为默认。其他设置草稿不会随皮肤提交，原有布局不变。接入与扩展方式见 [皮肤说明](docs/themes.md)，验证记录见 [雪豹测试](test/snow-leopard-20261029.md) 与 [发布记录](test/release-1.0.0-beta.2.md)。beta.1 包不包含此选择器。
+
+## 目录
 
 | 目录 | 用途 |
 | --- | --- |

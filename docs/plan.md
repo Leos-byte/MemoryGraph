@@ -2,13 +2,13 @@
 
 ## 1.0.0-beta.2 - Snow Leopard Publication
 
-Status: In progress at the owner's explicit request; preserve existing releases/backups.
+Status: Complete. Public prerelease at `2026-10-29T18:05:44Z` (2026-10-30 Asia/Shanghai). PR #7, CI `40924484539`, immutable target `161f877fe7762752974b7856d4e78310b34763cc`, formal run `40925967111`: all required checks passed. Nine draft/public assets independently verified; prior releases/backups preserved. See `test/release-1.0.0-beta.2.md`.
 
 - [x] Inspect remote releases, review skin/settings/bootstrap diff and prepare matching new version/notes.
-- [ ] Pass versioned local checks and Windows/Linux PR CI, then merge the exact reviewed commit.
-- [ ] Tag main, run hosted build/sign/draft upload and independently verify before publication.
-- [ ] Publish, verify unchanged assets and retain tagged source/compiled backup plus unpacked manual-test app.
-- [ ] Record observed results and update current usage/release context; no old-backup cleanup.
+- [x] Pass versioned local checks and Windows/Linux PR CI, then merge the exact reviewed commit.
+- [x] Tag main, run hosted build/sign/draft upload and independently verify before publication.
+- [x] Publish, verify unchanged assets and retain tagged source/compiled backup plus unpacked manual-test app.
+- [x] Record observed results and update current usage/release context; no old-backup cleanup.
 
 ## Snow Leopard Skin Implementation
 

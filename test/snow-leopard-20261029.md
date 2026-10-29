@@ -1,5 +1,7 @@
 # Snow Leopard Skin - 2026-10-29
 
+Subsequently published as v1.0.0-beta.2 on 2026-10-30 Asia/Shanghai, at the owner's follow-up request. This page preserves the earlier implementation-stage record; final PR/CI, signed assets and versioned retention evidence are in `test/release-1.0.0-beta.2.md`.
+
 ## Scope And Architecture
 
 Local implementation on main after `7b552bc`. Calico stays default with all original color/dimension values unchanged. Three additional foreground/subtle roles alias those original values. Snow Leopard has a fully scoped color/shadow declaration; shared spacing, typography, geometry and reduced-motion behavior are unchanged.

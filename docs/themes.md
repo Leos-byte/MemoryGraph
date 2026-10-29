@@ -12,4 +12,4 @@ The normal profile settings.json is authoritative; no localStorage mirror or sec
 
 Snow primary uses white text (5.04:1, hover 7.31:1). Auxiliary text uses #66716C instead of the suggested #707A76, which fails AA on light surfaces. Muted/selected surfaces use #596360. Focus/link is #405C53; required control outlines #75857F; deep-output links #B8CEC5. Semantic status colors remain independent.
 
-The feature is prepared for 1.0.0-beta.2 publication at the owner's request. Publication evidence is tracked in `test/release-1.0.0-beta.2.md`. Never overwrite earlier public assets or clean existing backups as part of skin work.
+The feature was published in 1.0.0-beta.2 at the owner's request, after Windows/Linux CI, formal builds and independent signed-metadata verification passed. Publication evidence is tracked in `test/release-1.0.0-beta.2.md`. Never overwrite earlier public assets or clean existing backups as part of skin work.
