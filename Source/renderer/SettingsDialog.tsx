@@ -7,7 +7,7 @@ import { ConfirmDialog, IconButton, Modal, Spinner } from './ui';
 
 const loginLabels = { running: 'loginWaiting', succeeded: 'loginCompleted', failed: 'loginFailed', cancelled: 'loginCancelled', timed_out: 'loginTimedOut' } as const;
 
-export function SettingsDialog({ snapshot, run, t, notify, onClose }: WorkspaceUI & { onClose: () => void }) {
+export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }: WorkspaceUI & { onClose: () => void; onUpdates: () => void }) {
   const [form, setForm] = useState<Settings>({ ...snapshot.settings });
   const [apiKey, setApiKey] = useState('');
   const [clearKey, setClearKey] = useState(false);
@@ -74,7 +74,10 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose }: WorkspaceU
         <label className="field">{t('language')}<select value={form.language} onChange={event => update('language', event.target.value as Settings['language'])}><option value="system">{t('system')}</option><option value="zh_CN">简体中文</option><option value="en_US">English</option></select></label>
         <label className="check-field"><input type="checkbox" checked={form.autoGenerate} onChange={event => update('autoGenerate', event.target.checked)} />{t('autoGenerate')}</label>
         <label className="field">{t('directory')}<span className="input-action"><input readOnly value={form.dataDirectory} /><IconButton icon={FolderOpen} label={t('chooseDirectory')} onClick={async () => { const result = await run<string | null>('data.choose'); if (result.ok && result.value) update('dataDirectory', result.value); }} /></span></label>
+        <h3 className="section-heading">{t('softwareUpdates')}</h3>
+        <label className="field">{t('updateMode')}<select value={form.updateMode} onChange={event => update('updateMode', event.target.value as Settings['updateMode'])}><option value="manual">{t('updateManual')}</option><option value="notify">{t('updateNotify')}</option><option value="download">{t('updateAutoDownload')}</option></select></label>
         <label className="check-field"><input type="checkbox" checked={form.channel === 'beta'} onChange={event => update('channel', event.target.checked ? 'beta' : 'stable')} />{t('beta')}</label>
+        <div className="button-row"><button type="button" disabled={dirty} onClick={onUpdates}><RefreshCw size={15} />{t('updates')}</button></div>
       </fieldset></div>
       <footer className="dialog-actions"><button type="button" disabled={busy} onClick={close}>{t('cancel')}</button><button className="primary" type="submit" disabled={busy}>{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
     </form>

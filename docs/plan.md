@@ -1,5 +1,39 @@
 # Project Plan
 
+## 1.0.0-beta.1 - Major Release And Backup Retention
+
+Status: In progress at the owner's request. Use the first 1.0 beta unless the owner explicitly chooses stable; do not represent automated mocks as real installed-upgrade acceptance.
+
+- [x] Inspect version, release guards, remote main/tags and local backup contents.
+- [x] Prepare matching package/lock metadata and release notes combining Calico and updater work.
+- [ ] Verify locally, submit PR, require successful Windows/Linux CI and merge the reviewed source.
+- [ ] Tag the tested main, build/sign a draft, verify assets/notes and publish the requested release.
+- [ ] Retain new exact source/compiled backup and Linux unpacked manual-test app, then delete only inventoried historical Backup directories.
+- [ ] Preserve `Backup/update-signing-private.pem`, the independent Qt SQLite backup, runtime data and GitHub historical releases. Record deletion results; do not run broad Backup cleanup.
+
+## 2026-10-29 - Calico UI (Unreleased)
+
+Status: Implemented and verified locally: typecheck/build, 129 units, 56 release-tool tests, all 17 desktop scenarios and retained Linux package smoke passed. Existing updater work is preserved. No release/push performed. Evidence: `test/calico-20261029.md`.
+
+- [x] Inspect React/custom CSS/React Flow structure and confirm a single light replacement theme.
+- [x] Centralize colors and shared dimensions; separate primary fills, readable accents and semantic statuses.
+- [x] Restyle workbench, graph, Markdown, dialogs, templates, feedback and updater surfaces without changing business commands.
+- [x] Improve narrow drawers/template layout, navigation accessible names and reduced-motion camera controls.
+- [x] Finish computed-color, responsive, desktop regression and package smoke checks; retain screenshots and local test app.
+- [ ] Windows desktop and real installed upgrades remain external manual gates; no release/push is part of this UI task.
+
+## 2026-10-29 - Manual And Automatic Updates (Unreleased)
+
+Status: Implemented and verified locally: typecheck/build, 129 unit tests, 56 release-tool tests, 14 desktop scenarios, screenshot inspection and isolated Linux unpacked smoke. The public beta.4 release and its tag/assets remain unchanged. No release or repository push is included in this request. Evidence: `test/updates-20261029.md`.
+
+- [x] Inspect the existing signed updater and preserve GitHub hosting, data backups and explicit restart consent.
+- [x] Add persisted manual/check-only/check-and-download modes, delayed startup and six-hour polling, and shutdown cleanup.
+- [x] Expose settings/manual entry points, background progress/readiness, installation confirmation and portable-build fallback in both languages.
+- [x] Guard concurrent actions/channel changes, re-disable downgrade after channel selection, and distinguish current-version/error states.
+- [x] Finish unit, desktop and simulated installer-control regressions; inspect narrow/desktop screenshots.
+- [x] Build/smoke a separately named Linux unpacked development app and retain it for manual testing.
+- [ ] Real Windows NSIS / Linux AppImage N-to-N+1 installation remains a manual acceptance gate, not established by mocked updater tests.
+
 ## 0.2.0-beta.4 - Current Model Catalog
 
 Status: Published at `2026-10-28T14:32:24Z`. PR #5 merged/tagged at `c99011580bbe46e80544c9131e417e3d4a619a58`; PR CI `40683763704` passed after one Windows native-install retry. Release run `40704949356` passed validation, both builds, signing and draft upload on its first attempt. Saved profiles and earlier assets remain intact; R2 stays off. See `test/models-release-20261028.md`.

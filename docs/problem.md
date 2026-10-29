@@ -1,5 +1,25 @@
 # Problem Log
 
+## 2026-10-29 - Calico Contrast And Existing Work
+
+- Audit finding: apricot text on warm white is only about 2.02:1; supplied hover orange as a focus boundary is about 2.83:1. Secondary gray on beige is about 3.95:1. Replacing every old accent with orange would regress accessibility and conflate success with brand color.
+- Resolution: split primary fills from readable accent/focus, add a stronger beige-surface text role and keep independent success/error/warning/info roles. Selected-node secondary text also uses the stronger role. Computed-browser regression tests check palette contrast, actual graph arrow fills and focus styling; color literals are centralized in tokens.
+- Compatibility: preserve all prior updater edits and schema/security behavior. Reduced motion must cover React Flow camera calls as well as CSS; both now follow the OS preference.
+- Attempts/time: initial 16-case suite and expanded 17-case suite passed; no test failure cycle. Two package builds retained the last hover refinement. Total interactive time was not instrumented. Existing Vite bundle-size and packaging duplicate-reference advisories were not treated as new functional failures.
+
+## 2026-10-29 - Update Renderer Harness Window Selection
+
+- Issue: both new simulated-updater UI cases initially sent their completion event to `BrowserWindow.getAllWindows().at(-1)`. Electron's window listing did not identify the intended new harness window; the main workspace is also open. The cases timed out looking for a ready/install control (35.1s and 33.1s). Production updater tests and the preceding 12 desktop flows passed.
+- Fix/prevention: retain the new window's returned ID, target `BrowserWindow.fromId(id)` explicitly, and assert the harness snapshot's resulting status before interacting. Never infer ownership from native window enumeration order. No production IPC or updater bypass was added.
+- Attempts/time: one failed focused run, one harness repair, then both focused cases passed in 3.8s; the final complete 14-case run also passed. Total interactive time was not instrumented.
+
+## 2026-10-29 - Restricted Build And Subprocess Test Environment
+
+- Issue: local unpacked packaging required an Electron runtime download and failed with sandbox `EAI_AGAIN github.com`. Separately, release-tool tests stalled after their first reported file inside the restricted process environment; exact child-process cause was not established.
+- Handling: request explicit escalation for the required operations, without disabling TLS or modifying network/security settings. One approved packaging retry completed. Stop only the identified test process started by this task, then rerun release-tool tests under a 90-second timeout with approval; all 56 passed in 1.39s. The interrupted attempt is not counted as a pass.
+- Prevention: for release-tool subprocess tests use an explicit timeout and the approved execution context; treat stalled/no-output runs as incomplete rather than relaxing security assertions. Use bounded, approved download retries and compare packaged bundles to the final compiled files before retention. Related earlier network/sandbox incidents remain below; no production/toolchain changes are justified by this environment-only result.
+- Attempts/time: one failed restricted packaging attempt and one successful approved retry; one stopped restricted tool-test attempt and one successful bounded retry. Total interactive elapsed time was not instrumented.
+
 ## 2026-10-28 - Windows Native Install During Model PR CI
 
 - Issue: PR CI `40683763704` attempt 1 failed before tests, while `node-gyp 12.4.0` compiled unchanged `better-sqlite3 13.0.3` under Node `22.23.4`/Python `3.15.1`. Reported `Completion callback never invoked`; the precise underlying cause was not proven. Linux passed.

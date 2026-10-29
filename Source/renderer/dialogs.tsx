@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Download, Link2, RefreshCw, RotateCw, Save } from 'lucide-react';
+import { Download, ExternalLink, Link2, RefreshCw, RotateCw, Save } from 'lucide-react';
 import type { NodeRecord } from '../shared/types';
 import type { WorkspaceUI } from './workspace';
 import type { Translate } from './i18n';
@@ -41,13 +41,15 @@ export function RelationDialog({ snapshot, run, t, sourceId, update, canGenerate
 
 export function UpdateDialog({ snapshot, run, t, onClose }: WorkspaceUI & { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [confirmInstall, setConfirmInstall] = useState(false);
   const state = snapshot.updates;
   const status = state.status === 'idle' ? 'updateIdle' : state.status;
-  const blocked = busy || ['checking', 'downloading'].includes(state.status);
-  async function action(command: 'updates.check' | 'updates.download' | 'updates.install') { setBusy(true); await run(command); setBusy(false); }
-  return <Modal title={t('updates')} onClose={onClose} testId="updates-dialog"><div className="modal-body update-body"><div className="update-symbol"><Download size={26} /></div><h3>MemGraph {snapshot.version}</h3><p role="status">{['checking', 'downloading'].includes(state.status) && <Spinner />}{t(status)}</p>{state.version && <p>{t('version')}: {state.version}</p>}{state.status === 'downloading' && <progress aria-label={t('downloading')} value={state.percent ?? 0} max={100} />}{state.message && <p className={state.status === 'error' ? 'inline-error' : 'muted'}>{state.message}</p>}{!state.supported && state.status !== 'unsupported' && <p className="muted">{t('unsupported')}</p>}</div>
-    <footer className="dialog-actions"><button type="button" onClick={onClose}>{t('close')}</button>{state.status === 'available' && <button type="button" className="primary" disabled={blocked || !state.supported} onClick={() => void action('updates.download')}><Download size={15} />{t('download')}</button>}{state.status === 'downloaded' ? <button type="button" className="primary" disabled={busy || !state.supported} onClick={() => void action('updates.install')}><RotateCw size={15} />{t('install')}</button> : <button type="button" disabled={blocked} onClick={() => void action('updates.check')}>{blocked ? <Spinner /> : <RefreshCw size={15} />}{t('updates')}</button>}</footer>
-  </Modal>;
+  const blocked = busy || ['checking', 'downloading', 'installing'].includes(state.status);
+  const close = () => { if (state.status !== 'installing') onClose(); };
+  async function action(command: 'updates.check' | 'updates.download' | 'updates.install') { setBusy(true); try { await run(command); } finally { setBusy(false); } }
+  return <><Modal title={t('softwareUpdates')} onClose={close} testId="updates-dialog"><div className="modal-body update-body"><div className="update-symbol"><Download size={26} /></div><h3>MemGraph {snapshot.version}</h3><p role="status">{['checking', 'downloading', 'installing'].includes(state.status) && <Spinner />}{t(status)}</p>{state.version && <p>{t('version')}: {state.version}</p>}{state.status === 'downloading' && <><progress aria-label={t('downloading')} value={state.percent ?? 0} max={100} /><p>{Math.floor(state.percent ?? 0)}%</p></>}{state.message && <p className={state.status === 'error' ? 'inline-error' : 'muted'}>{state.message}</p>}{state.checkedAt && <p className="muted">{t('lastChecked')}: {new Date(state.checkedAt).toLocaleString()}</p>}</div>
+    <footer className="dialog-actions"><button type="button" disabled={state.status === 'installing'} onClick={close}>{t('close')}</button>{!state.supported || state.status === 'error' ? <button type="button" onClick={() => void run('external.open', { url: state.releasesUrl })}><ExternalLink size={15} />{t('releases')}</button> : null}{state.status === 'available' && <button type="button" className="primary" disabled={blocked || !state.supported} onClick={() => void action('updates.download')}><Download size={15} />{t('download')}</button>}{state.status === 'downloaded' ? <button type="button" className="primary" disabled={blocked || !state.supported} onClick={() => setConfirmInstall(true)}><RotateCw size={15} />{t('install')}</button> : state.supported && <button type="button" disabled={blocked} onClick={() => void action('updates.check')}>{blocked ? <Spinner /> : <RefreshCw size={15} />}{t('updates')}</button>}</footer>
+  </Modal>{confirmInstall && <ConfirmDialog t={t} title={t('install')} message={t('restartWarning')} confirm={t('install')} onClose={() => setConfirmInstall(false)} onConfirm={() => { setConfirmInstall(false); void action('updates.install'); }} />}</>;
 }
 
 export function InfoDialog({ title, children, onClose, t }: { title: string; children: ReactNode; onClose: () => void; t: Translate }) {
