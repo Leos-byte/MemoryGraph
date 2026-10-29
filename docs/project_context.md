@@ -15,6 +15,7 @@ MemGraph helps users understand, connect, remember, and transfer knowledge throu
 
 ## Product Rules
 
+- Unreleased Calico renderer: single light theme, all colors in `Source/renderer/tokens.css`; no theme setting or animal decoration. Primary fill is distinct from readable accent; semantic green/red/amber/info states remain. React Flow SVGs use CSS tokens and camera animations respect reduced motion. See `docs/calico_design.md` and `test/calico-20261029.md`; existing updater changes must be preserved.
 - Map rename/delete/export belong only in map context menus. Recycle bin belongs in File. Secondary node actions belong in More.
 - Selection creates a linked child, generation off by default. Generating an existing concept reuses its node and edges.
 - AI relation descriptions are appended to the source explanation, never used as edge labels.
@@ -24,6 +25,7 @@ MemGraph helps users understand, connect, remember, and transfer knowledge throu
 
 ## Release Rules
 
+- Unreleased 2026-10-29 update controls: `Settings.updateMode` is `manual | notify | download`, default `notify` for new/old profiles. `Updates.configure` starts supported-build checks after 15s/every 6h and cancels timers on manual mode/exit. Automatic download is opt-in and follows manifest verification; normal quit never installs. Restart requires UI confirmation and successful SQLite backup. Channel changes invalidate old candidates, including in-flight completions; `allowDowngrade=false` must be set after assigning the library channel. Unpacked/development builds offer a GitHub download link instead of background updates. This source is not part of the published beta.4 binaries; installed OS-level upgrades remain untested. See `test/updates-20261029.md` for current verification/retention evidence.
 - Repository: Leos-byte/MemoryGraph, public with MIT license. Active branch is main.
 - Current public prerelease: [0.2.0-beta.4](https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.4), published `2026-10-28T14:32:24Z`. PR #5/tag/target: `c99011580bbe46e80544c9131e417e3d4a619a58`; PR CI `40683763704` passed after one Windows native-install retry, formal release `40704949356` passed on its first attempt. Nine assets, independently verified signed metadata and unchanged published identities/digests. Source/compiled backup: `Backup/20261028-v0.2.0-beta.4`; local workstation test copy: `Releases/MemGraph-v0.2.0-beta.4-linux-x64-unpacked`, not a byte-identical hosted download. See `test/models-release-20261028.md`.
 - Model catalog/default is shared in `Source/shared/models.ts`: five GPT-6 choices, canonical `deepseek-flash`, retained V4 Pro/Flash alias and legacy GPT/custom IDs. New profiles use `gpt-6.1-terra`; stored models are not migrated. Official sources/check date: `docs/models_20261028.md`. Local tests: 94 units, 10 desktop cases and 56 release-tool tests; real account/provider access is untested and conditional on the provider/Codex client.

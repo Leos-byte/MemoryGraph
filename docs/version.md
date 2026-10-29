@@ -1,5 +1,21 @@
 # Version History
 
+## 1.0.0-beta.1 - 2026-10-29
+
+- Major Calico release combines the unified light design, responsive reading/templates and accessible state/focus improvements with manual/automatic signed updates.
+- Keep SQLite/settings compatibility and existing models; no dependency or signing-key changes. Windows/Linux x64 installer and portable formats remain supported, with in-app replacement limited to NSIS/AppImage.
+- Release preparation in progress; actual publication/CI and explicitly authorized local historical backup cleanup will be recorded in `test/release-1.0.0-beta.1.md`. Real installed upgrades remain a manual gate.
+
+## Unreleased - 2026-10-29
+
+- Replace the previous green renderer theme with light Calico tokens, warm-white/cream surfaces, apricot actions and readable charcoal typography. Preserve semantic status colors, existing workflows and uncommitted updater behavior.
+- Unify graph arrows/edges, Markdown/code/tables, shared controls/dialogs, compact typography and responsive template management. Add computed-color and narrow-layout regressions; no dependencies or public version change.
+- Add manual, automatic check-only (default), and opt-in automatic check/download policies. Background checks start after 15 seconds and repeat every six hours on supported installed builds.
+- Show progress/readiness in the header; retain verified downloaded state across dialog reopening. Require explicit restart confirmation and a successful SQLite backup before installation, including auto-download mode.
+- Add settings/manual update entry points and GitHub fallback for unpacked/development builds and update errors. Localize new controls and statuses in Chinese/English.
+- Block duplicate operations and stale channel results, keep downgrade disabled after the updater's channel setter, and permit recovery after asynchronous installer errors. Add settings migration, signed updater and renderer-control tests.
+- No dependency, public version, tag, GitHub assets, R2 configuration or private credentials changed. beta.4 remains the latest public release.
+
 ## 0.2.0-beta.4 - 2026-10-28
 
 - Add the five current GPT-6 family presets and canonical `deepseek-flash`; keep Pro and a localized old Flash compatibility alias.

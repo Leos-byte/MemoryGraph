@@ -155,3 +155,25 @@ Implementation decisions:
 ## 2026-10-28 - Current Model Update And Release
 
 > openai 和 deepseek 模型更新了，请更新然后发版
+
+## 2026-10-29 - Manual And Automatic Updates
+
+> 增加手动更新和自动更新功能
+
+## 2026-10-29 - Calico UI
+
+Task title (verbatim):
+
+> # 任务：将当前项目 UI 改造为 Calico Design（三花猫自然配色风格）
+
+Theme decision: only replace the existing light theme; do not add a theme switcher. The detailed accepted implementation plan is reflected in `docs/calico_design.md`.
+
+Execution request (verbatim):
+
+> Implement the plan.
+
+## 2026-10-29 - Major Release And Backup Cleanup
+
+> 这个定为大版本，发版，并且删除以前版本的备份
+
+Preparation default: v1.0.0-beta.1, with a request to choose stable explicitly if desired. Historical Backup source/program directories are to be deleted only after successful publication and replacement retention; private signing key and independent database backup are preserved.

@@ -10,7 +10,8 @@ export const settingsSchema = z.object({
   baseUrl: z.string().max(2048), model: z.string().trim().min(1).max(200),
   apiMode: z.enum(['responses', 'chat_completions']), authMode: z.enum(['api_key', 'chatgpt_login']),
   language: z.enum(['system', 'zh_CN', 'en_US']), autoGenerate: z.boolean(),
-  dataDirectory: z.string().min(1).max(4096), channel: z.enum(['stable', 'beta'])
+  dataDirectory: z.string().min(1).max(4096), channel: z.enum(['stable', 'beta']),
+  updateMode: z.enum(['manual', 'notify', 'download']).default('notify')
 });
 export function validateSettings(values: unknown): Settings {
   const next = settingsSchema.parse(values);
@@ -31,7 +32,7 @@ export class Config {
   readonly path: string;
   constructor(readonly root: string) {
     this.path = join(root, 'settings.json');
-    this.settings = { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: defaultOpenAiPreset.apiMode, authMode: 'api_key', language: 'system', autoGenerate: false, dataDirectory: join(root, 'data'), channel: 'stable' };
+    this.settings = { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: defaultOpenAiPreset.apiMode, authMode: 'api_key', language: 'system', autoGenerate: false, dataDirectory: join(root, 'data'), channel: 'stable', updateMode: 'notify' };
     if (existsSync(this.path)) this.settings = settingsSchema.parse({ ...this.settings, ...JSON.parse(readFileSync(this.path, 'utf8')) });
   }
   save(settings: Settings) { const valid = settingsSchema.parse(settings); writePrivate(this.path, JSON.stringify(valid, null, 2)); this.settings = valid; }

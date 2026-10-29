@@ -2,13 +2,53 @@ import { _electron as electron, expect, test, type ElectronApplication, type Pag
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
-import type { Command, LoginState, NodeRecord, Snapshot, Trash } from '../../shared/types';
+import type { Command, LoginState, NodeRecord, Snapshot, Trash, UpdateState } from '../../shared/types';
 
 let application: ElectronApplication;
 let page: Page;
 let root: string;
+let updateWindowId: number;
 async function invoke<T = any>(command: Command, payload: Record<string, unknown> = {}): Promise<T> {
   return page.evaluate(({ command, payload }) => window.memgraph.invoke<T>(command, payload), { command, payload });
+}
+
+// Exercise update controls without replacing an installed executable or accessing GitHub.
+async function mountUpdateRenderer(state: Partial<UpdateState>) {
+  const snapshot = await invoke<Snapshot>('snapshot');
+  snapshot.updates = { ...snapshot.updates, supported: true, ...state };
+  const preload = join(root, 'update-renderer-preload.cjs');
+  writeFileSync(preload, `
+const { contextBridge, ipcRenderer } = require('electron');
+const snapshot = ${JSON.stringify(snapshot)};
+const calls = [], listeners = new Set();
+const change = values => { snapshot.updates = { ...snapshot.updates, ...values }; for (const fn of listeners) fn(); };
+ipcRenderer.on('memgraph-test:update', (_event, values) => change(values));
+contextBridge.exposeInMainWorld('memgraph', {
+  invoke: async (command, payload = {}) => {
+    if (command === 'snapshot') return { ...snapshot, testCalls: [...calls] };
+    calls.push(command);
+    if (command === 'updates.download') change({ status: 'downloading', percent: 42 });
+    if (command === 'updates.install') change({ status: 'installing' });
+    if (command === 'updates.check' && snapshot.updates.status !== 'downloaded') change({ status: 'upToDate', message: undefined });
+    if (command === 'settings.save') { Object.assign(snapshot.settings, payload); change({}); }
+  },
+  onChange: fn => { listeners.add(fn); return () => listeners.delete(fn); },
+  onLogin: () => () => {}, onGenerationError: () => () => {},
+});
+`);
+  const opened = application.waitForEvent('window');
+  updateWindowId = await application.evaluate(async ({ BrowserWindow }, preload) => {
+    const window = new BrowserWindow({ width: 1360, height: 840, webPreferences: { preload, contextIsolation: true, sandbox: true, nodeIntegration: false } });
+    window.removeMenu(); await window.loadURL('memgraph://app/index.html'); return window.id;
+  }, preload);
+  page = await opened;
+  await page.setViewportSize({ width: 1360, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.getByTestId('concept-input')).toBeVisible();
+}
+async function setRendererUpdate(state: Partial<UpdateState>) {
+  await application.evaluate(({ BrowserWindow }, { id, state }) => { BrowserWindow.fromId(id)!.webContents.send('memgraph-test:update', state); }, { id: updateWindowId, state });
+  await expect.poll(async () => (await invoke<Snapshot>('snapshot')).updates.status).toBe(state.status);
 }
 test.beforeEach(async () => {
   root = mkdtempSync(join(tmpdir(), 'memgraph-e2e-'));
@@ -249,4 +289,192 @@ test('legacy aliases are localized and custom saved model IDs are preserved', as
   await dialog.getByRole('combobox', { name: '\u670d\u52a1\u9884\u8bbe', exact: true }).selectOption({ label: 'DeepSeek / deepseek-v4-flash (\u517c\u5bb9\u522b\u540d)' });
   await dialog.getByRole('button', { name: '\u4fdd\u5b58', exact: true }).click();
   expect((await invoke<Snapshot>('snapshot')).settings.model).toBe('deepseek-v4-flash');
+});
+
+test('update policy and beta channel persist through the settings UI', async () => {
+  test.setTimeout(90000);
+  expect((await invoke<Snapshot>('snapshot')).settings.updateMode).toBe('notify');
+  for (const mode of ['manual', 'download', 'notify']) {
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const dialog = page.getByTestId('settings-dialog');
+    await dialog.getByRole('combobox', { name: 'Update mode', exact: true }).selectOption(mode);
+    await dialog.getByRole('checkbox', { name: 'Receive beta updates', exact: true }).check();
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    expect((await invoke<Snapshot>('snapshot')).settings).toMatchObject({ updateMode: mode, channel: 'beta' });
+    expect(JSON.parse(readFileSync(join(root, 'settings.json'), 'utf8')).updateMode).toBe(mode);
+  }
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByTestId('settings-dialog');
+  await expect(dialog.getByRole('combobox', { name: 'Update mode', exact: true })).toHaveValue('notify');
+  await expect(dialog.getByRole('checkbox', { name: 'Receive beta updates', exact: true })).toBeChecked();
+  await dialog.getByRole('combobox', { name: 'Update mode', exact: true }).selectOption('manual');
+  await expect(dialog.getByRole('button', { name: 'Check for updates', exact: true })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Discard changes', exact: true }).click();
+  expect((await invoke<Snapshot>('snapshot')).settings.updateMode).toBe('notify');
+  await invoke('settings.save', { language: 'zh_CN', updateMode: 'download' });
+  await page.getByRole('button', { name: '\u8bbe\u7f6e', exact: true }).click();
+  const chinese = page.getByTestId('settings-dialog');
+  await expect(chinese.getByRole('combobox', { name: '\u66f4\u65b0\u65b9\u5f0f', exact: true })).toHaveValue('download');
+  await expect(chinese.getByRole('option', { name: '\u81ea\u52a8\u68c0\u67e5\u5e76\u4e0b\u8f7d', exact: true })).toHaveCount(1);
+  await page.setViewportSize({ width: 960, height: 640 });
+  await chinese.getByRole('combobox', { name: '\u66f4\u65b0\u65b9\u5f0f', exact: true }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toHaveCount(0, { timeout: 10000 });
+  await page.screenshot({ path: 'test-results/update-settings-zh-narrow.png' });
+});
+
+test('manual update entry points show a usable release fallback for portable/development builds', async () => {
+  await page.getByRole('button', { name: 'File', exact: false }).first().click();
+  await page.getByTestId('file-menu').getByRole('menuitem', { name: 'Check for updates', exact: true }).click();
+  let dialog = page.getByTestId('updates-dialog');
+  await expect(dialog.getByRole('status')).toHaveText('In-app updates are unavailable for this build. Download from GitHub');
+  await expect(dialog.getByRole('button', { name: 'Download from GitHub', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Restart and install', exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Download from GitHub', exact: true }).click();
+  await page.screenshot({ path: 'test-results/updates-manual-desktop.png' });
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByTestId('settings-dialog').getByRole('button', { name: 'Check for updates', exact: true }).click();
+  await expect(page.getByTestId('settings-dialog')).toHaveCount(0);
+  await expect(page.getByTestId('updates-dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await invoke('settings.save', { language: 'zh_CN' });
+  await page.getByRole('button', { name: '\u6587\u4ef6', exact: false }).first().click();
+  await page.getByTestId('file-menu').getByRole('menuitem', { name: '\u68c0\u67e5\u66f4\u65b0', exact: true }).click();
+  dialog = page.getByTestId('updates-dialog');
+  await expect(dialog.getByRole('button', { name: '\u524d\u5f80 GitHub \u4e0b\u8f7d', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 960, height: 640 });
+  await page.screenshot({ path: 'test-results/updates-manual-zh-narrow.png' });
+});
+
+test('renderer update controls show background progress, retain readiness and require restart confirmation', async () => {
+  await mountUpdateRenderer({ status: 'available', version: '0.2.0-beta.5', checkedAt: '2026-10-29T00:00:00Z' });
+  await page.getByRole('button', { name: 'Update available', exact: true }).click();
+  let dialog = page.getByTestId('updates-dialog');
+  await dialog.getByRole('button', { name: 'Download update', exact: true }).click();
+  await expect(dialog.getByRole('progressbar')).toHaveAttribute('value', '42');
+  await expect(dialog.getByRole('button', { name: 'Check for updates', exact: true })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.setViewportSize({ width: 960, height: 640 });
+  await expect(page.getByRole('button', { name: 'Downloading 42%', exact: true })).toBeVisible();
+  const menu = await page.locator('.app-menu').boundingBox(), status = await page.locator('.header-status').boundingBox();
+  expect(menu!.x + menu!.width).toBeLessThanOrEqual(status!.x);
+  await page.screenshot({ path: 'test-results/update-progress-narrow.png' });
+  await setRendererUpdate({ status: 'downloaded', percent: 100 });
+  await page.getByRole('button', { name: 'Update ready', exact: true }).click();
+  dialog = page.getByTestId('updates-dialog');
+  await expect(dialog.getByRole('button', { name: 'Check for updates', exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Restart and install', exact: true }).click();
+  await expect(page.getByTestId('confirm-dialog')).toContainText('backed up before installation');
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect((await invoke('snapshot')).testCalls).not.toContain('updates.install');
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'File', exact: false }).first().click();
+  await page.getByTestId('file-menu').getByRole('menuitem', { name: 'Check for updates', exact: true }).click();
+  await expect(dialog.getByRole('status')).toHaveText('Update ready');
+  await page.setViewportSize({ width: 1360, height: 800 });
+  await page.screenshot({ path: 'test-results/update-ready-desktop.png' });
+  await dialog.getByRole('button', { name: 'Restart and install', exact: true }).click();
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Restart and install', exact: true }).click();
+  await expect(dialog.getByRole('status')).toHaveText('Backing up and installing update');
+  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeDisabled();
+  expect((await invoke('snapshot')).testCalls.filter((command: string) => command === 'updates.install')).toHaveLength(1);
+});
+
+test('renderer update errors expose retry and fallback, with Chinese ready and current-version states', async () => {
+  await mountUpdateRenderer({ status: 'error', message: 'Synthetic update network failure' });
+  await page.getByRole('button', { name: 'Software updates', exact: true }).click();
+  const dialog = page.getByTestId('updates-dialog');
+  await expect(dialog).toContainText('Synthetic update network failure');
+  await expect(dialog.getByRole('button', { name: 'Download from GitHub', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Check for updates', exact: true }).click();
+  await expect(dialog.getByRole('status')).toHaveText('Up to date');
+  await invoke('settings.save', { language: 'zh_CN' });
+  await expect(dialog.getByRole('status')).toHaveText('\u5df2\u662f\u6700\u65b0\u7248\u672c');
+  await setRendererUpdate({ status: 'downloaded', version: '0.2.0-beta.5' });
+  await dialog.getByRole('button', { name: '\u91cd\u542f\u5e76\u5b89\u88c5', exact: true }).click();
+  await expect(page.getByTestId('confirm-dialog')).toContainText('\u81ea\u52a8\u5907\u4efd');
+  await page.setViewportSize({ width: 960, height: 640 });
+  await page.screenshot({ path: 'test-results/update-confirm-zh-narrow.png' });
+  await page.keyboard.press('Escape');
+  expect((await invoke('snapshot')).testCalls).not.toContain('updates.install');
+});
+
+test('Calico computed colors meet contrast targets and graph arrows use the selected token', async () => {
+  const map = await invoke('map.create', { title: 'Calico workspace' });
+  const parent = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Understanding', x: 0, y: 0 });
+  await invoke('node.create', { mapId: map.id, title: 'Connection', parentId: parent.id, x: 270, y: 100 });
+  await page.locator('.react-flow__node').first().click();
+  const results = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    const color = (name: string) => { const e = document.createElement('span'); e.style.color = `var(--${name})`; document.body.append(e); const rgb = getComputedStyle(e).color; e.remove(); return rgb; };
+    const luminance = (value: string) => {
+      const [r, g, b] = value.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+      return r * .2126 + g * .7152 + b * .0722;
+    };
+    const pairs = [['text', 'primary'], ['text', 'primary-hover'], ['muted', 'surface'], ['muted', 'background'], ['text-on-muted', 'surface-muted'], ['accent', 'surface'], ['on-dark', 'dark-surface'], ['success', 'success-bg'], ['danger', 'danger-bg'], ['warning', 'warning-bg'], ['info', 'info-bg']];
+    return { background: style.backgroundColor, ratios: pairs.map(([a, b]) => { const x = luminance(color(a)), y = luminance(color(b)); return [a, (Math.max(x, y) + .05) / (Math.min(x, y) + .05)] as const; }),
+      primary: getComputedStyle(document.querySelector('.new-map-button')!).backgroundColor,
+      edge: getComputedStyle(document.querySelector('.react-flow__edge-path')!).stroke,
+      arrows: [...document.querySelectorAll('marker polyline')].map(e => getComputedStyle(e).fill), accent: color('accent') };
+  });
+  expect(results.background).toBe('rgb(247, 242, 234)');
+  expect(results.primary).toBe('rgb(244, 162, 97)');
+  for (const [token, ratio] of results.ratios) expect(ratio, token).toBeGreaterThanOrEqual(4.5);
+  expect(results.edge).toBe(results.accent); expect(results.arrows).toContain(results.accent);
+  await page.getByTestId('concept-input').focus();
+  expect(await page.getByTestId('concept-input').evaluate(e => getComputedStyle(e).borderColor)).toBe(results.accent);
+  await page.screenshot({ path: 'test-results/calico-workspace-desktop.png' });
+});
+
+test('Calico responsive reading, drawers and template controls remain usable', async () => {
+  test.setTimeout(90000);
+  await application.evaluate(({ BrowserWindow }) => { BrowserWindow.getAllWindows()[0].setMinimumSize(320, 480); });
+  const map = await invoke('map.create', { title: 'Long knowledge map with a readable title' });
+  const node = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Understanding and knowledge transfer' });
+  await invoke('node.edit', { id: node.id, title: node.title, markdown: '# Understanding\n\nA clear explanation with **connections** and [reference](https://example.com).\n\n> Knowledge becomes useful through practice.\n\n```ts\nconst concept = "A long code sample that must scroll within the reading surface rather than expand the workspace";\n```\n\n| Concept | Relationship | Example |\n| --- | --- | --- |\n| Understanding | Connect ideas | Transfer knowledge |' });
+  await page.locator('.react-flow__node').first().click();
+  for (const [width, height] of [[1360, 800], [960, 640], [768, 800], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    if (width < 660) await page.getByRole('button', { name: 'Show details', exact: true }).click();
+    await expect(page.getByTestId('markdown')).toBeVisible();
+    expect(await page.getByTestId('markdown').evaluate(e => getComputedStyle(e).fontSize)).toBe('16px');
+    const sizes = await page.evaluate(() => ({ viewport: innerWidth, page: document.documentElement.scrollWidth, pre: document.querySelector('.markdown pre')!.getBoundingClientRect(), panel: document.querySelector('.details-panel')!.getBoundingClientRect() }));
+    expect(sizes.page).toBeLessThanOrEqual(sizes.viewport); expect(sizes.pre.width).toBeLessThan(sizes.panel.width);
+    await page.screenshot({ path: `test-results/calico-reading-${width}.png` });
+    if (width < 660) await page.keyboard.press('Escape');
+  }
+  await page.getByRole('button', { name: 'Templates', exact: true }).click();
+  const dialog = page.getByTestId('template-dialog');
+  await expect(dialog.getByRole('button', { name: 'Save', exact: true })).toBeInViewport();
+  await dialog.getByRole('button', { name: 'Template help', exact: true }).click();
+  await expect(page.getByTestId('template-help-dialog')).toContainText('required');
+  await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByTestId('settings-dialog').getByRole('button', { name: 'Save', exact: true })).toBeInViewport();
+  await page.screenshot({ path: 'test-results/calico-settings-mobile.png' });
+  await page.keyboard.press('Escape');
+  await invoke('settings.save', { language: 'zh_CN' });
+  await page.getByRole('button', { name: '\u6a21\u677f\u7ba1\u7406', exact: true }).click();
+  await page.screenshot({ path: 'test-results/calico-templates-zh-mobile.png' });
+});
+
+test('Calico keyboard focus, large text and reduced motion work under a dark OS preference', async () => {
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Settings', exact: true }).focus();
+  expect(await page.getByRole('button', { name: 'Settings', exact: true }).evaluate(e => getComputedStyle(e).outlineStyle)).toBe('solid');
+  await page.keyboard.press('Enter');
+  const dialog = page.getByTestId('settings-dialog');
+  await expect(dialog).toBeVisible();
+  await page.evaluate(() => { document.documentElement.style.fontSize = '17.5px'; });
+  expect(await dialog.evaluate(e => getComputedStyle(e).backgroundColor)).toBe('rgb(255, 252, 248)');
+  const save = dialog.getByRole('button', { name: 'Save', exact: true });
+  await expect(save).toBeInViewport();
+  await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport();
+  await save.focus(); await page.keyboard.press('Tab');
+  expect(await dialog.evaluate(e => e.contains(document.activeElement))).toBe(true);
+  const duration = await save.evaluate(e => getComputedStyle(e, '::before').transitionDuration);
+  expect(parseFloat(duration)).toBeLessThan(.01);
+  await page.screenshot({ path: 'test-results/calico-large-text.png' });
+  await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
 });

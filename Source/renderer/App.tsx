@@ -171,10 +171,10 @@ export function App() {
   return <div className="app-shell">
     <header className="app-header"><div className="brand"><Network size={21} aria-hidden="true" /><span>MemGraph</span></div><nav className="app-menu" aria-label="MemGraph">
       <button type="button" aria-haspopup="menu" aria-expanded={menu?.testId === 'file-menu'} onClick={event => { if (menu?.testId === 'file-menu') closeMenu(); else openAt(event, fileItems(), 'file-menu'); }}>{t('file')}<ChevronDown size={12} /></button>
-      <button type="button" onClick={() => setDialog({ kind: 'settings' })}><Settings size={15} /><span>{t('settings')}</span></button>
-      <button type="button" onClick={() => setDialog({ kind: 'templates' })}><BookOpen size={15} /><span>{t('templates')}</span></button>
-      <button type="button" onClick={() => setDialog({ kind: 'about' })}><Info size={15} /><span>{t('about')}</span></button>
-    </nav><div className="header-status"><span className="version-tag">v{snapshot.version}</span>{snapshot.updates.status === 'available' && <IconButton icon={Download} label={t('available')} onClick={() => setDialog({ kind: 'updates' })} />}</div></header>
+      <button type="button" aria-label={t('settings')} title={t('settings')} onClick={() => setDialog({ kind: 'settings' })}><Settings size={15} /><span>{t('settings')}</span></button>
+      <button type="button" aria-label={t('templates')} title={t('templates')} onClick={() => setDialog({ kind: 'templates' })}><BookOpen size={15} /><span>{t('templates')}</span></button>
+      <button type="button" aria-label={t('about')} title={t('about')} onClick={() => setDialog({ kind: 'about' })}><Info size={15} /><span>{t('about')}</span></button>
+    </nav><div className="header-status"><span className="version-tag">v{snapshot.version}</span>{['available', 'downloading', 'downloaded', 'error'].includes(snapshot.updates.status) && <button type="button" className="update-status" onClick={() => setDialog({ kind: 'updates' })}>{snapshot.updates.status === 'downloading' ? <Spinner /> : <Download size={15} />}<span>{t(snapshot.updates.status === 'error' ? 'softwareUpdates' : snapshot.updates.status as 'available' | 'downloading' | 'downloaded')}{snapshot.updates.status === 'downloading' ? ` ${Math.floor(snapshot.updates.percent ?? 0)}%` : ''}</span></button>}</div></header>
     {error && <div className="error-banner" role="alert"><CircleAlert size={15} /><span>{error}</span><button type="button" onClick={() => void refresh()}>{t('retry')}</button></div>}
     <main className={`workbench ${drawer ? `drawer-${drawer}` : ''}`}>
       {drawer && <button type="button" className="drawer-scrim" aria-label={t('close')} onClick={() => setDrawer(null)} />}
@@ -203,6 +203,7 @@ export function App() {
           }}><ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml disallowedElements={['img']} components={{
             a: ({ href, children }) => href && /^https?:\/\//i.test(href) ? <a href={href} rel="noreferrer" onClick={event => { event.preventDefault(); void run('external.open', { url: href }); }}>{children}</a> : <span>{children}</span>,
             img: () => null,
+            table: ({ children }) => <div className="markdown-table" tabIndex={0} role="region" aria-label={t('markdown')}><table>{children}</table></div>,
           }}>{selected.markdown}</ReactMarkdown>{!selected.markdown.trim() && <p className="muted">{t('noContent')}</p>}{selectedBusy && <div className="generation-indicator" role="status"><Spinner /><span>{t('generating')}</span></div>}</div>
         </> : <div className="empty-state details-empty"><FileText size={29} /><span>{t('selectNode')}</span></div>}
       </aside>
@@ -214,7 +215,7 @@ export function App() {
     {dialog?.kind === 'new-node' && <TitleDialog t={t} title={dialog.parent ? t('linkedNode') : t('newNode')} initial={dialog.selectedText?.slice(0, 250) ?? ''} generate={dialog.parent ? false : snapshot.settings.autoGenerate} onClose={closeDialog} testId="new-node-dialog" onSubmit={(title, generate) => createNode(title, generate, dialog)} />}
     {dialog?.kind === 'edit-node' && <EditNodeDialog {...shared} node={dialog.node} onClose={closeDialog} />}
     {dialog?.kind === 'relation' && <RelationDialog {...shared} sourceId={dialog.sourceId} update={dialog.update} canGenerate={canGenerate} onClose={closeDialog} />}
-    {dialog?.kind === 'settings' && <SettingsDialog {...shared} onClose={closeDialog} />}
+    {dialog?.kind === 'settings' && <SettingsDialog {...shared} onClose={closeDialog} onUpdates={updates} />}
     {dialog?.kind === 'templates' && <TemplateDialog {...shared} onClose={closeDialog} />}
     {dialog?.kind === 'trash' && <RecycleDialog {...shared} onClose={closeDialog} />}
     {dialog?.kind === 'updates' && <UpdateDialog {...shared} onClose={closeDialog} />}

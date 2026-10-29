@@ -13,7 +13,7 @@ const Concept = memo(function Concept({ data, selected }: NodeProps<ConceptNode>
   const Icon = data.busy ? LoaderCircle : failed ? CircleAlert : cancelled ? StopCircle : ready ? CircleCheck : CircleDashed;
   return <div className={`concept-node ${selected ? 'is-selected' : ''} ${failed ? 'is-error' : ''}`}>
     <Handle type="target" position={Position.Left} aria-label={data.t('target')} />
-    <div className="concept-node-title" data-testid="graph-node-title">{data.title}</div>
+    <div className="concept-node-title" data-testid="graph-node-title" title={data.title}>{data.title}</div>
     <div className={`concept-node-status ${data.busy ? 'is-busy' : ''}`}><Icon size={12} className={data.busy ? 'spin' : ''} aria-hidden="true" /><span>{data.busy ? data.t('generating') : statusLabel(data.status, data.t)}</span></div>
     <Handle type="source" position={Position.Right} aria-label={data.t('source')} />
   </div>;
@@ -46,9 +46,9 @@ function GraphView({ snapshot, selectedId, t, onSelect, onMove, onConnect, onCon
   }, [snapshot.nodes, snapshot.busy, selectedId, t, setNodes]);
   const edges = useMemo(() => snapshot.edges.filter(edge => snapshot.nodes.some(node => node.id === edge.source_node_id) && snapshot.nodes.some(node => node.id === edge.target_node_id)).map(edge => ({
     id: edge.id, source: edge.source_node_id, target: edge.target_node_id, label: edge.label || undefined,
-    type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#7d9792' },
-    style: { stroke: edge.source_node_id === selectedId || edge.target_node_id === selectedId ? '#168477' : '#a7b7b3', strokeWidth: 1.5 },
-    labelStyle: { fill: '#57635f', fontSize: 11 }, labelBgStyle: { fill: '#fff' }, labelBgPadding: [5, 3] as [number, number],
+    type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: edge.source_node_id === selectedId || edge.target_node_id === selectedId ? 'var(--accent)' : 'var(--edge)' },
+    style: { stroke: edge.source_node_id === selectedId || edge.target_node_id === selectedId ? 'var(--accent)' : 'var(--edge)', strokeWidth: 1.5 },
+    labelStyle: { fill: 'var(--muted)', fontSize: 12 }, labelBgStyle: { fill: 'var(--surface)' }, labelBgPadding: [5, 3] as [number, number],
   })), [snapshot.edges, snapshot.nodes, selectedId]);
   return <div className="graph-surface" data-testid="canvas" aria-label={t('graph')} onPointerDownCapture={event => {
     if (event.button === 2) rightGesture.current = { x: event.clientX, y: event.clientY, moved: false };
@@ -64,12 +64,12 @@ function GraphView({ snapshot, selectedId, t, onSelect, onMove, onConnect, onCon
       onSelectionChange={onSelectionChange}
       fitView fitViewOptions={{ padding: 0.3, maxZoom: 1 }} minZoom={0.15} maxZoom={2} panOnDrag={[2]} selectionOnDrag={false}
       deleteKeyCode={null} nodesConnectable nodesFocusable edgesFocusable={false} proOptions={{ hideAttribution: true }}>
-      <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#d3ddda" />
+      <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="var(--canvas-dot)" />
     </ReactFlow>
     <div className="graph-controls" role="toolbar" aria-label={t('graph')}>
-      <IconButton icon={Plus} label={t('zoomIn')} onClick={() => void flow.zoomIn({ duration: 120 })} />
-      <IconButton icon={Minus} label={t('zoomOut')} onClick={() => void flow.zoomOut({ duration: 120 })} />
-      <span className="control-separator" /><IconButton icon={Focus} label={t('fitView')} onClick={() => void flow.fitView({ padding: 0.3, maxZoom: 1, duration: 150 })} />
+      <IconButton icon={Plus} label={t('zoomIn')} onClick={() => void flow.zoomIn({ duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180 })} />
+      <IconButton icon={Minus} label={t('zoomOut')} onClick={() => void flow.zoomOut({ duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180 })} />
+      <span className="control-separator" /><IconButton icon={Focus} label={t('fitView')} onClick={() => void flow.fitView({ padding: 0.3, maxZoom: 1, duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220 })} />
     </div>
     {!nodes.length && <div className="canvas-empty" aria-live="polite"><CircleDashed size={28} /><span>{snapshot.mapId ? t('nodesEmpty') : t('selectMap')}</span></div>}
   </div>;

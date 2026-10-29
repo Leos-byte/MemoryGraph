@@ -25,6 +25,17 @@ function fixture() {
 }
 
 describe('shared settings and legacy-import policy', () => {
+  it('defaults old profiles to check-only without changing their model or channel', () => {
+    const { config } = fixture();
+    const { updateMode: _mode, ...legacy } = { ...config.settings, model: 'existing-model', channel: 'beta' as const };
+    writeFileSync(config.path, JSON.stringify(legacy));
+    expect(new Config(config.root).settings).toMatchObject({ model: 'existing-model', channel: 'beta', updateMode: 'notify' });
+  });
+  it.each(['manual', 'notify', 'download'] as const)('persists the %s update policy', async updateMode => {
+    const { config, actions } = fixture();
+    await applySettings(config, { updateMode }, actions);
+    expect(new Config(config.root).settings.updateMode).toBe(updateMode);
+  });
   it('clears memory and persisted credentials before adopting another provider', async () => {
     const { config, credential, actions, key } = fixture();
     const imported = validateSettings({ ...config.settings, baseUrl: 'https://api.deepseek.com', model: 'deepseek-v4-pro', apiMode: 'chat_completions' });
@@ -97,6 +108,7 @@ describe('shared settings and legacy-import policy', () => {
     { authMode: 'chatgpt_login', apiMode: 'chat_completions' },
     { apiKey: 42 },
     { apiKey: 'x'.repeat(4097) },
+    { updateMode: 'always-install' },
   ])('rejects invalid imported/saved values before any side effect: %o', async changes => {
     const { config, credential, actions, key } = fixture();
     const before = { ...config.settings };

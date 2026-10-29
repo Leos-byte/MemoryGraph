@@ -134,7 +134,7 @@ async function chooseAndImport(source?: string) {
     await importDatabase(path, destination);
     if (importedSettings) await applySettings(config, { ...importedSettings }, { changeDirectory, storeKey });
   }
-  finally { store = new Store(destination); recoverInterrupted(); selectedMap = null; changed(); }
+  finally { store = new Store(destination); recoverInterrupted(); selectedMap = null; updates.configure(config.settings); changed(); }
   return true;
 }
 async function openExternal(url: string, mail = false) {
@@ -144,6 +144,7 @@ async function openExternal(url: string, mail = false) {
   try { await shell.openExternal(url); } catch { clipboard.writeText(url); await dialog.showMessageBox(window, { message: 'No handler was available. The address has been copied. / 无可用客户端，地址已复制。' }); }
 }
 async function handle(command: Command, p: Record<string, unknown>): Promise<unknown> {
+  if (updates.state.status === 'installing' && command !== 'snapshot') throw new Error('An update is being installed. Please wait.');
   switch (command) {
     case 'snapshot': return snapshot(p.mapId);
     case 'map.create': { const map = store.createMap(nonempty(p.title)); selectedMap = map.id; changed(); return map; }
@@ -180,7 +181,7 @@ async function handle(command: Command, p: Record<string, unknown>): Promise<unk
     case 'trash.restore': store.restore(z.enum(['maps', 'nodes', 'templates']).parse(p.kind), id(p.id)); break;
     case 'trash.empty': await backup('before-empty-trash'); store.emptyTrash(); break;
     case 'settings.save': {
-      await applySettings(config, p, { changeDirectory, storeKey }); break;
+      await applySettings(config, p, { changeDirectory, storeKey }); updates.configure(config.settings); break;
     }
     case 'data.choose': return (await dialog.showOpenDialog(window, { properties: ['openDirectory', 'createDirectory'] })).filePaths[0] || null;
     case 'data.import': return chooseAndImport(p.path && legacy.database === p.path ? legacy.database : undefined);
@@ -244,11 +245,12 @@ async function start() {
   });
   window.once('ready-to-show', () => window.show());
   await window.loadURL('memgraph://app/index.html');
+  updates.configure(config.settings);
 }
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
   app.whenReady().then(start).catch(error => { dialog.showErrorBox('MemGraph startup failed', `${String(error)}\nUser data: ${root}\nExisting snapshots remain in the data/backups directory.`); app.quit(); });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => { cancelAll(); login.cancel(); store?.close(); });
+  app.on('before-quit', () => { updates?.dispose(); cancelAll(); login.cancel(); store?.close(); });
 }
