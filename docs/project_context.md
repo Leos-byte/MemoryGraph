@@ -15,6 +15,7 @@ MemGraph helps users understand, connect, remember, and transfer knowledge throu
 
 ## Product Rules
 
+- Skin selection prepared for 1.0.0-beta.2: `Source/shared/themes.ts`, `Settings.theme`, scoped snow-leopard CSS and allowlisted prepaint HTML seeding. Calico stays default, original tokens unchanged. Skin autosaves alone; ordinary settings drafts exclude theme to avoid stale overwrite. No theme localStorage or second provider. See `docs/themes.md`. Owner requested continuation through publication; retain previous backups/releases.
 - Calico renderer, released in 1.0.0-beta.1: single light theme, all colors in `Source/renderer/tokens.css`; no theme setting or animal decoration. Primary fill is distinct from readable accent; semantic green/red/amber/info states remain. React Flow SVGs use CSS tokens and camera animations respect reduced motion. See `docs/calico_design.md` and `test/calico-20261029.md`; existing updater changes must be preserved.
 - Map rename/delete/export belong only in map context menus. Recycle bin belongs in File. Secondary node actions belong in More.
 - Selection creates a linked child, generation off by default. Generating an existing concept reuses its node and edges.

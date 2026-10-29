@@ -40,6 +40,8 @@ Windows 安装版和 Linux AppImage 支持检查更新、校验、下载和重�
 
 ## 目录
 
+1.0.0-beta.2 新增独立的“雪豹 Snow Leopard”皮肤，可在“设置 > 通用 > 皮肤”即时切换并自动保存；Calico 仍为默认。其他设置草稿不会随皮肤提交，原有布局不变。接入与扩展方式见 [皮肤说明](docs/themes.md)，验证记录见 [雪豹测试](test/snow-leopard-20261029.md)，发布进度见 [发布记录](test/release-1.0.0-beta.2.md)。beta.1 包不包含此选择器。
+
 | 目录 | 用途 |
 | --- | --- |
 | `Source` | Electron 主进程、React 界面、共享类型、测试及依赖锁文件 |

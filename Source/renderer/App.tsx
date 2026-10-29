@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { applyTheme } from './theme';
 import { ArchiveRestore, BookOpen, Check, ChevronDown, ChevronRight, CircleAlert, CircleDashed, Copy, Download, FilePlus2, FileText, FolderOpen, Info, Link2, Mail, MoreHorizontal, Network, PanelLeft, PanelRight, Pencil, Plus, RefreshCw, Settings, Sparkles, Square, Trash2, Upload, X } from 'lucide-react';
 import type { Command, MapRecord, NodeRecord } from '../shared/types';
 import { Graph } from './Graph';
@@ -51,6 +52,7 @@ export function App() {
   const currentMap = snapshot?.maps.find(map => map.id === snapshot.mapId);
 
   useEffect(() => { setConcept(selected?.title ?? ''); }, [selected?.id]);
+  useEffect(() => { if (snapshot) applyTheme(snapshot.settings.theme); }, [snapshot?.settings.theme]);
 
   useEffect(() => {
     const language = languageFor(snapshot?.settings.language);

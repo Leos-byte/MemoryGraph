@@ -478,3 +478,117 @@ test('Calico keyboard focus, large text and reduced motion work under a dark OS 
   await page.screenshot({ path: 'test-results/calico-large-text.png' });
   await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
 });
+
+test('Snow Leopard switches instantly, isolates unsaved settings and restores Calico exactly', async () => {
+  const map = await invoke('map.create', { title: 'Theme round trip' });
+  const parent = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Understanding', x: 0, y: 0 });
+  await invoke('node.create', { mapId: map.id, title: 'Connection', parentId: parent.id, x: 270, y: 100 });
+  await page.locator('.react-flow__node').first().click();
+  const palette = () => page.evaluate(() => {
+    const s = getComputedStyle(document.documentElement);
+    return Object.fromEntries([...s].filter(key => key.startsWith('--')).map(key => [key, s.getPropertyValue(key)]));
+  });
+  const before = await palette();
+  const viewport = await page.locator('.react-flow__viewport').getAttribute('style');
+  await page.evaluate(() => { (window as any).themeSentinel = 'not-reloaded'; });
+  const saved = (await invoke<Snapshot>('snapshot')).settings;
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByTestId('settings-dialog'), skin = dialog.getByRole('combobox', { name: 'Skin', exact: true });
+  await expect(skin).toHaveValue('calico');
+  await dialog.getByLabel('Model', { exact: true }).fill('UNSAVED_THEME_TEST_MODEL');
+  await skin.selectOption('snow-leopard');
+  await expect.poll(async () => (await invoke<Snapshot>('snapshot')).settings.theme).toBe('snow-leopard');
+  await expect(skin).toBeEnabled();
+  expect((await invoke<Snapshot>('snapshot')).settings).toEqual({ ...saved, theme: 'snow-leopard' });
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue('UNSAVED_THEME_TEST_MODEL');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Discard changes', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).themeSentinel)).toBe('not-reloaded');
+  expect(await page.locator('.react-flow__viewport').getAttribute('style')).toBe(viewport);
+  await expect(page.getByTestId('node-title')).toHaveText('Understanding');
+  await page.screenshot({ path: 'test-results/snow-workspace-desktop.png' });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await skin.selectOption('calico');
+  await expect.poll(async () => (await invoke<Snapshot>('snapshot')).settings.theme).toBe('calico');
+  await expect(skin).toBeEnabled();
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await palette()).toEqual(before);
+  expect(await page.locator('.react-flow__viewport').getAttribute('style')).toBe(viewport);
+});
+
+test('Snow Leopard persists across a process restart and is bootstrapped before React', async () => {
+  await invoke('settings.save', { theme: 'snow-leopard', language: 'zh_CN' });
+  await application.close();
+  const env = { ...process.env, MEMGRAPH_TEST_MODE: '1', MEMGRAPH_TEST_ROOT: root, MEMGRAPH_MOCK_AI: '1' } as Record<string, string>;
+  delete env.ELECTRON_RUN_AS_NODE;
+  application = await electron.launch({ args: [...(process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless'] : []), resolve('.')], env });
+  page = await application.firstWindow();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'snow-leopard');
+  const html = await application.evaluate(async ({ net }) => (await net.fetch('memgraph://app/index.html')).text());
+  expect(html).toContain('data-theme="snow-leopard"');
+  expect(html).toContain("script-src 'self'");
+  expect((await invoke<Snapshot>('snapshot')).settings.theme).toBe('snow-leopard');
+  expect((await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].getBackgroundColor())).toLowerCase()).toBe('#f5f6f4');
+  await page.getByRole('button', { name: '\u8bbe\u7f6e', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '\u76ae\u80a4', exact: true }).getByRole('option', { name: '\u96ea\u8c79 Snow Leopard', exact: true })).toHaveCount(1);
+  await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setMinimumSize(320, 480));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('combobox', { name: '\u76ae\u80a4', exact: true }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'test-results/snow-settings-zh-mobile.png' });
+});
+
+test('Snow Leopard failed autosave rolls back without affecting other settings', async () => {
+  const before = (await invoke<Snapshot>('snapshot')).settings;
+  mkdirSync(join(root, 'settings.json.tmp'));
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByTestId('settings-dialog');
+  const skin = dialog.getByRole('combobox', { name: 'Skin', exact: true });
+  await skin.selectOption('snow-leopard');
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(skin).toBeEnabled(); await expect(skin).toHaveValue('calico');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'calico');
+  expect((await invoke<Snapshot>('snapshot')).settings).toEqual(before);
+});
+
+test('Snow Leopard real component contrast, graph colors and responsive surfaces', async () => {
+  test.setTimeout(90000);
+  await invoke('settings.save', { theme: 'snow-leopard' });
+  const map = await invoke('map.create', { title: 'Alpine knowledge' });
+  const parent = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Knowledge', x: 0, y: 0 });
+  await invoke('node.create', { mapId: map.id, title: 'Transfer', parentId: parent.id, x: 270, y: 100 });
+  await invoke('node.edit', { id: parent.id, title: parent.title, markdown: '# Knowledge\n\nA calm reading surface with **connections**.\n\n> A practical example.\n\n```ts\nconst knowledge = "understand and connect";\n```\n\n| Concept | Example |\n| --- | --- |\n| Connection | Transfer |' });
+  await page.locator('.react-flow__node').first().click();
+  await expect(page.locator('.react-flow__edge-path').first()).toBeVisible();
+  await expect.poll(() => page.locator('marker polyline').count()).toBeGreaterThan(0);
+  const ratios = await page.evaluate(() => {
+    const color = (key: string) => { const el = document.createElement('span'); el.style.color = `var(--${key})`; document.body.append(el); const rgb = getComputedStyle(el).color; el.remove(); return rgb; };
+    const lum = (rgb: string) => { const [r,g,b] = rgb.match(/[\d.]+/g)!.slice(0,3).map(Number).map(v => { v /= 255; return v <= .04045 ? v/12.92 : ((v+.055)/1.055)**2.4; }); return r*.2126+g*.7152+b*.0722; };
+    const pairs = [['on-primary','primary'],['on-primary','primary-hover'],['muted','surface'],['text-subtle','background'],['text-on-muted','surface-muted'],['text-on-muted','accent-light'],['accent','surface'],['on-dark-link','dark-surface'],['success','success-bg'],['danger','danger-bg'],['warning','warning-bg'],['info','info-bg']];
+    const result = pairs.map(([a,b]) => { const x=lum(color(a)), y=lum(color(b)); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); });
+    if (getComputedStyle(document.querySelector('.new-map-button')!).color !== color('on-primary')) throw new Error('Button foreground not themed');
+    if (getComputedStyle(document.querySelector('.react-flow__edge-path')!).stroke !== color('accent')) throw new Error('Edge not themed');
+    if (![...document.querySelectorAll('marker polyline')].some(el => getComputedStyle(el).fill === color('accent'))) throw new Error('Arrow not themed');
+    return result;
+  });
+  for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5);
+  await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setMinimumSize(320, 480));
+  for (const [width,height] of [[1360,800],[960,640],[768,800],[390,844]]) {
+    await page.setViewportSize({ width,height });
+    if (width<660) await page.getByRole('button', { name: 'Show details', exact: true }).click();
+    await expect(page.getByTestId('markdown')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/snow-reading-${width}.png` });
+    if (width<660) await page.keyboard.press('Escape');
+  }
+  await page.getByRole('button', { name: 'Templates', exact: true }).click();
+  await expect(page.getByTestId('template-dialog').getByRole('button', { name: 'Save', exact: true })).toBeInViewport();
+  await page.screenshot({ path: 'test-results/snow-templates-mobile.png' });
+  await page.keyboard.press('Escape');
+  for (const item of ['Recycle bin', 'Check for updates']) {
+    await page.getByRole('button', { name: 'File', exact: false }).first().click();
+    await page.getByTestId('file-menu').getByRole('menuitem', { name: item, exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.screenshot({ path: `test-results/snow-${item === 'Recycle bin' ? 'recycle' : 'updates'}-mobile.png` });
+    await page.keyboard.press('Escape');
+  }
+});

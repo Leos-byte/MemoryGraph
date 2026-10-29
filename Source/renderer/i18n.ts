@@ -1,6 +1,7 @@
 import type { Settings } from '../shared/types';
 
 const messages = {
+  skin: ['皮肤', 'Skin'],
   file: ['文件', 'File'], settings: ['设置', 'Settings'], templates: ['模板管理', 'Templates'], about: ['关于', 'About'],
   maps: ['知识地图', 'Knowledge maps'], newMap: ['新建地图', 'New map'], newNode: ['新建节点', 'New node'],
   rename: ['重命名', 'Rename'], delete: ['删除', 'Delete'], export: ['导出 Markdown', 'Export Markdown'],

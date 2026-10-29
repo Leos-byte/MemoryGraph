@@ -9,6 +9,7 @@ import { Store, importDatabase } from './store';
 import { apiGenerate, codexGenerate, runCodex } from './ai';
 import { feedbackText, feedbackUrl, renderTemplate, REPOSITORY, upsertRelation } from './core';
 import { Updates } from './updates';
+import { themeBackground, themeHtml } from '../shared/themes';
 import { LoginSession } from './login';
 import { commands, type Command, type Id, type Settings, type Snapshot } from '../shared/types';
 
@@ -181,7 +182,7 @@ async function handle(command: Command, p: Record<string, unknown>): Promise<unk
     case 'trash.restore': store.restore(z.enum(['maps', 'nodes', 'templates']).parse(p.kind), id(p.id)); break;
     case 'trash.empty': await backup('before-empty-trash'); store.emptyTrash(); break;
     case 'settings.save': {
-      await applySettings(config, p, { changeDirectory, storeKey }); updates.configure(config.settings); break;
+      await applySettings(config, p, { changeDirectory, storeKey }); updates.configure(config.settings); window.setBackgroundColor(themeBackground(config.settings.theme)); break;
     }
     case 'data.choose': return (await dialog.showOpenDialog(window, { properties: ['openDirectory', 'createDirectory'] })).filePaths[0] || null;
     case 'data.import': return chooseAndImport(p.path && legacy.database === p.path ? legacy.database : undefined);
@@ -228,10 +229,11 @@ async function start() {
     const url = new URL(request.url);
     const file = resolve(renderer, '.' + decodeURIComponent(url.pathname));
     if (url.hostname !== 'app' || !file.startsWith(renderer + sep)) return new Response('Forbidden', { status: 403 });
+    if (file === join(renderer, 'index.html')) return new Response(themeHtml(readFileSync(file, 'utf8'), config.settings.theme), { headers: { 'content-type': 'text/html; charset=utf-8' } });
     return net.fetch(pathToFileURL(file).href);
   });
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-  window = new BrowserWindow({ width: 1360, height: 840, minWidth: 900, minHeight: 600, title: 'MemGraph', show: false, autoHideMenuBar: true, webPreferences: { preload: join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, backgroundThrottling: !testMode } });
+  window = new BrowserWindow({ width: 1360, height: 840, minWidth: 900, minHeight: 600, title: 'MemGraph', backgroundColor: themeBackground(config.settings.theme), show: false, autoHideMenuBar: true, webPreferences: { preload: join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, backgroundThrottling: !testMode } });
   window.removeMenu();
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, url) => { if (url !== 'memgraph://app/index.html') event.preventDefault(); });

@@ -1,5 +1,27 @@
 # Conversation History
 
+## 2026-10-30 - Snow Leopard Publication
+
+> 继续直到发版
+
+Use a new beta version and the existing reviewed CI/sign/draft/publication process; preserve earlier releases and backups.
+
+## 2026-10-29 - Snow Leopard Skin
+
+Task title (verbatim):
+
+> # 任务：新增 Snow Leopard（雪豹）UI 皮肤
+
+Persistence decision (verbatim):
+
+> 立即生效并自动保存 (Recommended)
+
+Execution request (verbatim):
+
+> Implement the plan.
+
+Preserve Calico as default, all layouts and business behavior; skin saves independently of other settings drafts. No publication or backup cleanup requested.
+
 ## 2026-10-26 - Electron Migration
 
 User: "Implement the plan."

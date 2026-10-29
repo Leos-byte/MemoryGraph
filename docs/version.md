@@ -1,5 +1,17 @@
 # Version History
 
+## 1.0.0-beta.2 - 2026-10-30
+
+- Publish the additive Snow Leopard skin with immediate isolated theme persistence, startup seeding and safe stored-ID fallback; preserve Calico defaults/layout and existing workflows.
+- Package/lock versions match without dependency changes. Signed Windows/Linux installer and portable builds are being verified before publication; evidence will be in `test/release-1.0.0-beta.2.md`.
+
+## Unreleased - Snow Leopard
+
+- Add scoped `snow-leopard` skin, registry and persisted selector; Calico remains default, its values/layout unchanged.
+- Skin alone autosaves immediately, survives restart and rolls back on failed write. Unknown stored IDs safely fall back; invalid requests reject.
+- Seed the HTML theme before rendering; add readable primary foreground/deep-output link roles and switch/persistence/contrast regressions.
+- No dependency, package version, released assets or backup retention changes.
+
 ## 1.0.0-beta.1 - 2026-10-29
 
 - Major Calico release combines the unified light design, responsive reading/templates and accessible state/focus improvements with manual/automatic signed updates.

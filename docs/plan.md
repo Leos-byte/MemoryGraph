@@ -1,5 +1,25 @@
 # Project Plan
 
+## 1.0.0-beta.2 - Snow Leopard Publication
+
+Status: In progress at the owner's explicit request; preserve existing releases/backups.
+
+- [x] Inspect remote releases, review skin/settings/bootstrap diff and prepare matching new version/notes.
+- [ ] Pass versioned local checks and Windows/Linux PR CI, then merge the exact reviewed commit.
+- [ ] Tag main, run hosted build/sign/draft upload and independently verify before publication.
+- [ ] Publish, verify unchanged assets and retain tagged source/compiled backup plus unpacked manual-test app.
+- [ ] Record observed results and update current usage/release context; no old-backup cleanup.
+
+## Snow Leopard Skin Implementation
+
+Status: Implemented and verified locally: typecheck/build, 141 unit tests, 21 desktop scenarios, 56 release-tool checks and isolated package smoke passed. See `test/snow-leopard-20261029.md`.
+
+- [x] Inspect Calico tokens; confirm immediate isolated skin persistence.
+- [x] Add registry, typed settings, scoped colors and prepaint bootstrap without changing Calico values/layout.
+- [x] Add selector, isolated drafts, serialized writes and failure rollback.
+- [x] Complete tests/screenshots, isolated package smoke and retained development build.
+- The implementation-only milestone initially excluded publication; the owner's subsequent request is tracked in the beta.2 publication section above. No backup cleanup is authorized.
+
 ## 1.0.0-beta.1 - Major Release And Backup Retention
 
 Status: Complete. Public v1.0.0-beta.1 at `2026-10-29T12:54:56Z`; PR #6/CI `40833451157`, tag `ff0635e1abf9ad5122ab2ad5f434846fe1b44a18`, release run `40875526528`. New backup retained; all seven allowlisted historical directories deleted, protected key/database preserved. See `test/release-1.0.0-beta.1.md`.
