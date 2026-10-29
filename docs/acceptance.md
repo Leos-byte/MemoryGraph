@@ -1,5 +1,15 @@
 # Electron Migration Acceptance
 
+## Current 1.0.0-beta.1 Evidence
+
+Public prerelease at `2026-10-29T12:54:56Z`, tag/target `ff0635e1abf9ad5122ab2ad5f434846fe1b44a18`. PR #6 CI `40833451157` and release `40875526528` passed Windows Server 2022 / Ubuntu 22.04 x64 tests, unpacked smoke, both package formats and signed-asset verification. Local baseline: 129 units, 17 desktop scenarios, 56 release-tool checks, typecheck/build and versioned unpacked smoke.
+
+Independent metadata review verified all nine uploaded assets, Ed25519 signature, updater hashes and unchanged public identities/digests. Full installer bytes were verified in CI, not downloaded locally. Local workstation source/compiled backup: `Backup/20261029-v1.0.0-beta.1`; unpacked app: `Releases/MemGraph-v1.0.0-beta.1-linux-x64-unpacked`. Seven older Backup program/source directories were deleted by explicit owner request; independent Qt database/private signing key and historical Releases remain.
+
+Manual NSIS installation, real Windows 10/11 desktop, FUSE/OS-keyring behavior and installed N-to-N+1 replacement remain unchecked. Mock updater tests do not establish those outcomes. See `../test/release-1.0.0-beta.1.md`. The beta.4 records below are historical, not a claim those older backup directories still exist.
+
+## Historical Beta.4 Baseline
+
 Target: **MemGraph 0.2.0-beta.4**, Windows x64 (NSIS + zip) and Linux x64 (AppImage + tar.gz). Public prerelease requested by the owner on 2026-10-28 and published at `14:32:24Z`. Unchecked manual gates below remain open before stable promotion. Use synthetic content and an isolated test data directory. Never test migrations/restores on the only copy of a user's data. A checked box requires observed evidence, not an implemented feature or a workflow file.
 
 ## Evidence Record

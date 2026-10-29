@@ -23,4 +23,4 @@ Regression coverage uses actual computed browser colors, graph strokes/arrow fil
 
 ## Compatibility
 
-No schema, IPC, model, credentials, routing, update-policy or database changes belong to this visual upgrade. The previous uncommitted manual/automatic updater work is preserved. Version remains 0.2.0-beta.4 for this unpublished development build; public release assets are not changed. Test evidence and remaining platform gates are recorded separately in `test/calico-20261029.md`.
+No schema, IPC, model, credentials, routing, update-policy or database changes belong to this visual upgrade. The previous uncommitted manual/automatic updater work is preserved. The implementation-stage evidence is recorded in `test/calico-20261029.md`. Calico and updater features subsequently shipped in 1.0.0-beta.1; publication, current backup retention and remaining manual gates are recorded in `test/release-1.0.0-beta.1.md`.

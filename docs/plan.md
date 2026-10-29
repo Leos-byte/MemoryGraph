@@ -2,14 +2,14 @@
 
 ## 1.0.0-beta.1 - Major Release And Backup Retention
 
-Status: In progress at the owner's request. Use the first 1.0 beta unless the owner explicitly chooses stable; do not represent automated mocks as real installed-upgrade acceptance.
+Status: Complete. Public v1.0.0-beta.1 at `2026-10-29T12:54:56Z`; PR #6/CI `40833451157`, tag `ff0635e1abf9ad5122ab2ad5f434846fe1b44a18`, release run `40875526528`. New backup retained; all seven allowlisted historical directories deleted, protected key/database preserved. See `test/release-1.0.0-beta.1.md`.
 
 - [x] Inspect version, release guards, remote main/tags and local backup contents.
 - [x] Prepare matching package/lock metadata and release notes combining Calico and updater work.
-- [ ] Verify locally, submit PR, require successful Windows/Linux CI and merge the reviewed source.
-- [ ] Tag the tested main, build/sign a draft, verify assets/notes and publish the requested release.
-- [ ] Retain new exact source/compiled backup and Linux unpacked manual-test app, then delete only inventoried historical Backup directories.
-- [ ] Preserve `Backup/update-signing-private.pem`, the independent Qt SQLite backup, runtime data and GitHub historical releases. Record deletion results; do not run broad Backup cleanup.
+- [x] Verify locally, submit PR, require successful Windows/Linux CI and merge the reviewed source.
+- [x] Tag the tested main, build/sign a draft, verify assets/notes and publish the requested release.
+- [x] Retain new exact source/compiled backup and Linux unpacked manual-test app, then delete only inventoried historical Backup directories.
+- [x] Preserve `Backup/update-signing-private.pem`, the independent Qt SQLite backup, runtime data and GitHub historical releases. Record deletion results; do not run broad Backup cleanup.
 
 ## 2026-10-29 - Calico UI (Unreleased)
 

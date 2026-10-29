@@ -4,9 +4,12 @@
 
 - Major Calico release combines the unified light design, responsive reading/templates and accessible state/focus improvements with manual/automatic signed updates.
 - Keep SQLite/settings compatibility and existing models; no dependency or signing-key changes. Windows/Linux x64 installer and portable formats remain supported, with in-app replacement limited to NSIS/AppImage.
-- Release preparation in progress; actual publication/CI and explicitly authorized local historical backup cleanup will be recorded in `test/release-1.0.0-beta.1.md`. Real installed upgrades remain a manual gate.
+- Published https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.1 at `2026-10-29T12:54:56Z`. PR #6 / tag: `ff0635e1abf9ad5122ab2ad5f434846fe1b44a18`; PR CI `40833451157` and release build/sign/upload `40875526528` passed both platforms. All nine asset identities/digests remained unchanged after independent draft review/publication.
+- Retained exact tagged source, local compiled backup and unpacked manual-test app. Deleted the seven explicitly inventoried historical Backup program/source directories, preserving the signing key, independent Qt database backup, runtime data and GitHub history. See `test/release-1.0.0-beta.1.md`; real installed upgrades remain a manual gate.
 
-## Unreleased - 2026-10-29
+## Pre-Release Implementation Record - 2026-10-29
+
+The following describes the implementation stage before publication in 1.0.0-beta.1 above.
 
 - Replace the previous green renderer theme with light Calico tokens, warm-white/cream surfaces, apricot actions and readable charcoal typography. Preserve semantic status colors, existing workflows and uncommitted updater behavior.
 - Unify graph arrows/edges, Markdown/code/tables, shared controls/dialogs, compact typography and responsive template management. Add computed-color and narrow-layout regressions; no dependencies or public version change.

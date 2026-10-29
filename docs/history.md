@@ -177,3 +177,9 @@ Execution request (verbatim):
 > 这个定为大版本，发版，并且删除以前版本的备份
 
 Preparation default: v1.0.0-beta.1, with a request to choose stable explicitly if desired. Historical Backup source/program directories are to be deleted only after successful publication and replacement retention; private signing key and independent database backup are preserved.
+
+Continuation (verbatim):
+
+> 继续
+
+Outcome: v1.0.0-beta.1 published and the seven inventoried historical Backup source/program directories deleted after new backup/publication verification. Signing key, independent database backup, runtime data and GitHub history were preserved.

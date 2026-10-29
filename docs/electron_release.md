@@ -1,6 +1,12 @@
 # Electron Release
 
-Current public prerelease: [**0.2.0-beta.4**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.4), public MIT repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. Release run `40704949356` passed after model PR #5; tag/target is `c99011580bbe46e80544c9131e417e3d4a619a58`. The owner requested model updates/publication on 2026-10-28; the reviewed nine-file draft was separately published at `14:32:24Z`. The workflow itself still creates only drafts and refuses a private repository. No automatic merge or draft-publication policy was enabled.
+Current major prerelease: [**1.0.0-beta.1 - Calico**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.1), published `2026-10-29T12:54:56Z`. PR #6 CI `40833451157` and formal run `40875526528` succeeded; immutable tag/target `ff0635e1abf9ad5122ab2ad5f434846fe1b44a18`. All nine signed assets were reviewed before publication and identities/digests remained unchanged. Windows NSIS/ZIP, Linux AppImage/tar.gz and beta updater metadata are included. See `release_notes_1.0.0-beta.1.md` and `../test/release-1.0.0-beta.1.md`.
+
+Owner-authorized one-time cleanup on 2026-10-29 removed the seven historical program/source directories enumerated in that record only after new backup verification/publication. `Backup/20261029-v1.0.0-beta.1`, the independent Qt SQLite backup, private signing key and existing Releases remain. Old Backup paths mentioned below describe earlier release milestones, not current retention. Routine release tooling still must not clean backups or user data. Real installed upgrades remain unverified; this is a beta, not stable promotion.
+
+## Historical Beta.4 Procedure And Evidence
+
+Previous public prerelease: [**0.2.0-beta.4**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.4), public MIT repository `Leos-byte/MemoryGraph`, Electron + React + TypeScript, Windows and Linux **x64 only**. Release run `40704949356` passed after model PR #5; tag/target is `c99011580bbe46e80544c9131e417e3d4a619a58`. The owner requested model updates/publication on 2026-10-28; the reviewed nine-file draft was separately published at `14:32:24Z`. The workflow itself still creates only drafts and refuses a private repository. No automatic merge or draft-publication policy was enabled.
 
 Optional download mirroring is documented in [R2 Mirror](r2_mirror.md). It is opt-in, operates only on already published signed assets, and does not change the app's GitHub update source or the draft-publication approval gate.
 
@@ -90,14 +96,14 @@ Changing the bundled public key breaks verification for clients that trust only 
 ## Manual Release
 
 1. Complete [acceptance.md](acceptance.md), review the diff, and manually merge the tested change. Confirm public visibility, the MIT license, the bundled key, the signing secret, and the feedback email. Require the two platform checks through branch protection if available. Protect `v*` tags from movement/deletion through repository rules.
-2. Ensure the version in `Source/package.json`, `Source/package-lock.json`, and the lockfile root package agrees. Version `0.2.0-beta.4` and all earlier public tags/assets must not be overwritten. Use a new version for each subsequent beta/stable release, matching builder metadata to its inferred channel. Commit these changes before tagging; the following example assumes a future `0.2.0-beta.5` version bump has already been merged.
+2. Ensure the version in `Source/package.json`, `Source/package-lock.json`, and the lockfile root package agrees. Version `0.2.0-beta.4` and all earlier public tags/assets must not be overwritten. Use a new version for each subsequent beta/stable release, matching builder metadata to its inferred channel. Commit these changes before tagging; the following example assumes a future `1.0.0-beta.2` version bump has already been merged.
 3. Fetch and inspect `origin/main`; create and push an existing tag at its **current HEAD**. For example, after the intended commit is on `main`:
 
 ```bash
 git fetch origin main --tags
-git tag -a v0.2.0-beta.5 origin/main -m "MemGraph 0.2.0-beta.5"
-git push origin refs/tags/v0.2.0-beta.5
-gh workflow run electron-release.yml --ref main -f tag=v0.2.0-beta.5
+git tag -a v1.0.0-beta.2 origin/main -m "MemGraph 1.0.0-beta.2"
+git push origin refs/tags/v1.0.0-beta.2
+gh workflow run electron-release.yml --ref main -f tag=v1.0.0-beta.2
 ```
 
 4. Dispatch **on `main`**, not on the tag. Validation requires the canonical repository, manual event, matching full SHA, existing lightweight/annotated tag at `main` HEAD, and matching package/lock versions. There are no tag-push, issue, comment, `pull_request_target`, `workflow_run`, or self-hosted-runner publishing triggers.

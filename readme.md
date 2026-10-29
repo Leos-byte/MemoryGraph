@@ -4,7 +4,7 @@
 
 理解、连接、记忆与迁移。输入概念生成 Markdown 解释，在解释中选择陌生内容继续展开，构建保存在本机的知识地图。
 
-最新公开测试版：[**0.2.0-beta.4**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v0.2.0-beta.4)，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
+最新大版本测试版：[**1.0.0-beta.1 - Calico**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.1)，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
 
 ## 下载与反馈
 
@@ -34,9 +34,9 @@ Qt 原版冻结在 `qt-v0.1.0-frozen` 标签。首次导入会复制旧 SQLite �
 
 Windows 安装版和 Linux AppImage 支持检查更新、校验、下载和重启应用。ZIP/解压版提供新版下载入口。更新清单使用独立 Ed25519 签名，数据库迁移前创建快照；失败恢复路径见 [使用说明](docs/usage.md)。
 
-当前未发布开发版另支持在设置中选择“仅手动更新 / 自动检查更新 / 自动检查并下载”，安装前仍需确认重启并自动备份数据。已发布的 beta.4 不包含这些新增控件；本地验证见 [更新测试记录](test/updates-20261029.md)。
+1.0 支持在设置中选择“仅手动更新 / 自动检查更新 / 自动检查并下载”，安装前仍需确认重启并自动备份数据。接收本测试版需启用 Beta 通道；解压版仍需手动下载替换。验证及限制见 [发布记录](test/release-1.0.0-beta.1.md)。
 
-开发版界面采用 Calico 亮色设计，统一奶油白、杏橘与炭黑的语义化 Tokens，保留工作台布局、中英文和原有业务功能。设计规则见 [Calico 说明](docs/calico_design.md)，尚未替换 GitHub 已发布的安装包。
+1.0 界面采用 Calico 亮色设计，统一奶油白、杏橘与炭黑的语义化 Tokens，保留工作台布局、中英文和原有业务功能。设计规则见 [Calico 说明](docs/calico_design.md)。旧版 Backup 源码/程序目录已按要求清理，保留本版本备份、独立数据库备份及更新签名私钥；GitHub 历史版本未删除。
 
 ## 目录
 
