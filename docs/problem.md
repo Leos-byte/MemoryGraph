@@ -1,5 +1,12 @@
 # Problem Log
 
+## 2026-10-29 - Skin Bootstrap Test Boundaries
+
+- Initial desktop run: 19 passed, two new skin cases failed. A renderer fetch used to inspect bootstrap HTML was correctly blocked by existing `connect-src 'none'`; graph-style inspection ran before the SVG edge existed.
+- Fix: inspect the same protocol response through main-process `net.fetch`, assert original CSP remains, and wait for visible graph paths/markers before reading computed style. No production security policy or graph behavior was relaxed.
+- Focused rerun: three of four skin cases passed; the remaining bootstrap check compared lowercase hex to Electron's equivalent uppercase color. Normalize color case in the test rather than changing runtime behavior.
+- Prevention: inspect pre-render resources from the appropriate trusted process, use readiness assertions for asynchronous SVGs, normalize equivalent native color representations. Attempts: initial full suite, focused rerun, then complete final rerun; total interactive time not instrumented. These were test-assumption issues, not evidence of failed persistence.
+
 ## 2026-10-29 - Calico Contrast And Existing Work
 
 - Audit finding: apricot text on warm white is only about 2.02:1; supplied hover orange as a focus boundary is about 2.83:1. Secondary gray on beige is about 3.95:1. Replacing every old accent with orange would regress accessibility and conflate success with brand color.

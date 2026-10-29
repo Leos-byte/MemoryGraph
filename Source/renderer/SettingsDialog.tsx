@@ -1,14 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, FolderOpen, LogIn, RefreshCw, Save, Square } from 'lucide-react';
 import type { LoginState, Settings } from '../shared/types';
 import { defaultOpenAiPreset, modelPresets as presets } from '../shared/models';
 import type { WorkspaceUI } from './workspace';
 import { ConfirmDialog, IconButton, Modal, Spinner } from './ui';
+import { isThemeId, themes, type ThemeId } from '../shared/themes';
+import { applyTheme } from './theme';
+import { languageFor } from './i18n';
+
+const draftSettings = ({ theme: _theme, ...draft }: Settings) => draft;
 
 const loginLabels = { running: 'loginWaiting', succeeded: 'loginCompleted', failed: 'loginFailed', cancelled: 'loginCancelled', timed_out: 'loginTimedOut' } as const;
 
 export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }: WorkspaceUI & { onClose: () => void; onUpdates: () => void }) {
-  const [form, setForm] = useState<Settings>({ ...snapshot.settings });
+  const [form, setForm] = useState(() => draftSettings(snapshot.settings));
+  const [pendingTheme, setPendingTheme] = useState<ThemeId | null>(null);
+  const themeLock = useRef(false);
   const [apiKey, setApiKey] = useState('');
   const [clearKey, setClearKey] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -18,10 +25,10 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
   const [checkingLogin, setCheckingLogin] = useState(false);
   const [loginStatus, setLoginStatus] = useState('');
   const [discard, setDiscard] = useState(false);
-  const dirty = JSON.stringify(form) !== JSON.stringify(snapshot.settings) || !!apiKey || clearKey;
+  const dirty = JSON.stringify(form) !== JSON.stringify(draftSettings(snapshot.settings)) || !!apiKey || clearKey;
   const loginBusy = loginStarting || login.status === 'running';
   const acceptLogin = (next: LoginState) => setLogin(current => next.revision >= current.revision ? next : current);
-  const close = () => { if (busy) return; if (dirty) setDiscard(true); else onClose(); };
+  const close = () => { if (busy || themeLock.current) return; if (dirty) setDiscard(true); else onClose(); };
   useEffect(() => {
     let active = true;
     const receive = (next: LoginState) => { if (active) setLogin(current => next.revision >= current.revision ? next : current); };
@@ -35,12 +42,22 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
     void run<string>('codex.status').then(result => { if (active && result.ok) setLoginStatus(result.value); });
     return () => { active = false; };
   }, [login.status, run]);
-  const update = <K extends keyof Settings>(key: K, value: Settings[K]) => setForm(current => ({ ...current, [key]: value }));
+  const update = <K extends keyof typeof form>(key: K, value: Settings[K]) => setForm(current => ({ ...current, [key]: value }));
+  async function changeTheme(value: string) {
+    if (!isThemeId(value) || themeLock.current || busy || value === snapshot.settings.theme) return;
+    const previous = snapshot.settings.theme;
+    themeLock.current = true; setPendingTheme(value); applyTheme(value);
+    try {
+      const result = await run('settings.save', { theme: value });
+      if (!result.ok) applyTheme(previous);
+    } finally { themeLock.current = false; setPendingTheme(null); }
+  }
   const preset = presets.findIndex(item => item.baseUrl === form.baseUrl.replace(/\/$/, '') && item.model === form.model && item.apiMode === form.apiMode);
   let originChanged = false;
   try { originChanged = new URL(form.baseUrl).origin !== new URL(snapshot.settings.baseUrl).origin; } catch { /* URL validation is shown on save. */ }
 
   async function save() {
+    if (busy || themeLock.current) return;
     try {
       const url = new URL(form.baseUrl);
       if (url.protocol !== 'https:') throw new Error();
@@ -54,7 +71,7 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
 
   return <><Modal title={t('settings')} onClose={close} testId="settings-dialog" wide>
     <form onSubmit={event => { event.preventDefault(); void save(); }}>
-      <div className="modal-body settings-body"><fieldset disabled={busy}>
+      <div className="modal-body settings-body"><fieldset disabled={busy || pendingTheme !== null}>
         <h3>{t('api')}</h3>
         <label className="field">{t('preset')}<select value={preset < 0 ? 'custom' : preset} onChange={event => { const chosen = presets[Number(event.target.value)]; if (chosen) setForm(current => ({ ...current, baseUrl: chosen.baseUrl, model: chosen.model, apiMode: chosen.apiMode, authMode: chosen.baseUrl === 'https://api.deepseek.com' ? 'api_key' : current.authMode })); }}><option value="custom">{t('custom')}</option>{presets.map((item, index) => <option key={item.name} value={index}>{item.name}{item.compatibilityAlias ? ` (${t('compatibilityAlias')})` : ''}</option>)}</select></label>
         <div className="form-grid"><label className="field">{t('authMode')}<select value={form.authMode} onChange={event => { const authMode = event.target.value as Settings['authMode']; if (authMode === 'chatgpt_login') { let official = false; try { official = new URL(form.baseUrl).origin === 'https://api.openai.com'; } catch { /* Use the official preset for invalid origins. */ } setForm(current => ({ ...current, authMode, ...(official ? { apiMode: 'responses' } : { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: 'responses' }) })); } else update('authMode', authMode); }}><option value="api_key">{t('apiKey')}</option><option value="chatgpt_login">{t('chatgpt')}</option></select></label>
@@ -72,6 +89,7 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
         </div>}
         <h3 className="section-heading">{t('general')}</h3>
         <label className="field">{t('language')}<select value={form.language} onChange={event => update('language', event.target.value as Settings['language'])}><option value="system">{t('system')}</option><option value="zh_CN">简体中文</option><option value="en_US">English</option></select></label>
+        <label className="field">{t('skin')}<select value={pendingTheme ?? snapshot.settings.theme} aria-busy={pendingTheme !== null} onChange={event => void changeTheme(event.target.value)}>{themes.map(theme => <option key={theme.id} value={theme.id}>{theme.label[languageFor(snapshot.settings.language) === 'zh' ? 0 : 1]}</option>)}</select></label>
         <label className="check-field"><input type="checkbox" checked={form.autoGenerate} onChange={event => update('autoGenerate', event.target.checked)} />{t('autoGenerate')}</label>
         <label className="field">{t('directory')}<span className="input-action"><input readOnly value={form.dataDirectory} /><IconButton icon={FolderOpen} label={t('chooseDirectory')} onClick={async () => { const result = await run<string | null>('data.choose'); if (result.ok && result.value) update('dataDirectory', result.value); }} /></span></label>
         <h3 className="section-heading">{t('softwareUpdates')}</h3>
@@ -79,7 +97,7 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
         <label className="check-field"><input type="checkbox" checked={form.channel === 'beta'} onChange={event => update('channel', event.target.checked ? 'beta' : 'stable')} />{t('beta')}</label>
         <div className="button-row"><button type="button" disabled={dirty} onClick={onUpdates}><RefreshCw size={15} />{t('updates')}</button></div>
       </fieldset></div>
-      <footer className="dialog-actions"><button type="button" disabled={busy} onClick={close}>{t('cancel')}</button><button className="primary" type="submit" disabled={busy}>{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
+      <footer className="dialog-actions"><button type="button" disabled={busy || pendingTheme !== null} onClick={close}>{t('cancel')}</button><button className="primary" type="submit" disabled={busy || pendingTheme !== null}>{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
     </form>
   </Modal>{discard && <ConfirmDialog t={t} title={t('unsaved')} message={t('discardWarning')} confirm={t('discard')} onConfirm={onClose} onClose={() => setDiscard(false)} />}</>;
 }

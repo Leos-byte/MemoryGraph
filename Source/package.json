@@ -1,6 +1,6 @@
 {
   "name": "memgraph",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "MemGraph knowledge learning workspace",
   "author": "Leos-byte",
   "desktopName": "memgraph.desktop",

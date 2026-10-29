@@ -1,5 +1,8 @@
 :root {
   color-scheme: light;
+  --on-primary: var(--text);
+  --on-dark-link: var(--primary);
+  --text-subtle: var(--muted);
   --background: #F7F2EA;
   --surface: #FFFCF8;
   --surface-muted: #EADCC8;
