@@ -77,7 +77,7 @@ afterEach(() => {
 describe('Qt schema and migrations', () => {
   it('creates the exact Qt columns, defaults, foreign keys, WAL and owner-only files', () => {
     const store = open();
-    expect(store.db.pragma('user_version', { simple: true })).toBe(1n);
+    expect(store.db.pragma('user_version', { simple: true })).toBe(2n);
     expect(store.db.pragma('journal_mode', { simple: true })).toBe('wal');
     expect(store.db.pragma('foreign_keys', { simple: true })).toBe(1n);
     const info = store.db.pragma('table_info(maps)') as { name: string; notnull: bigint; dflt_value: string | null }[];
@@ -127,7 +127,7 @@ describe('Qt schema and migrations', () => {
     expect(store.graph('1').nodes).toHaveLength(2);
     expect(store.node('1').deleted_at).toBe('');
     expect(store.node('1').status).toBe('generating');
-    expect(store.db.pragma('user_version', { simple: true })).toBe(1n);
+    expect(store.db.pragma('user_version', { simple: true })).toBe(2n);
     expect(store.db.pragma('foreign_key_check')).toEqual([]);
   });
 
@@ -433,7 +433,7 @@ describe('SQLite backups and validated imports', () => {
     else {
       const db = legacy(source);
       if (kind === 'missing-columns') db.exec('ALTER TABLE generation_history RENAME COLUMN prompt_snapshot TO wrong_column');
-      if (kind === 'future') db.pragma('user_version = 2');
+      if (kind === 'future') db.pragma('user_version = 99');
       if (kind === 'foreign-keys') {
         db.pragma('foreign_keys = OFF');
         db.exec('UPDATE nodes SET map_id = 999 WHERE id = 1');

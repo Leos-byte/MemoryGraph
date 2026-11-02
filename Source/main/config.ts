@@ -13,7 +13,7 @@ export const settingsSchema = z.object({
   language: z.enum(['system', 'zh_CN', 'en_US']), autoGenerate: z.boolean(),
   dataDirectory: z.string().min(1).max(4096), channel: z.enum(['stable', 'beta']),
   updateMode: z.enum(['manual', 'notify', 'download']).default('notify'),
-  theme: z.enum(themes.map(theme => theme.id)).default(defaultTheme)
+  theme: z.enum(themes.map(theme => theme.id)).default(defaultTheme), enhancedContent: z.boolean().default(true)
 });
 export function validateSettings(values: unknown): Settings {
   const next = settingsSchema.parse(values);
@@ -34,7 +34,7 @@ export class Config {
   readonly path: string;
   constructor(readonly root: string) {
     this.path = join(root, 'settings.json');
-    this.settings = { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: defaultOpenAiPreset.apiMode, authMode: 'api_key', language: 'system', autoGenerate: false, dataDirectory: join(root, 'data'), channel: 'stable', updateMode: 'notify', theme: defaultTheme };
+    this.settings = { baseUrl: defaultOpenAiPreset.baseUrl, model: defaultOpenAiPreset.model, apiMode: defaultOpenAiPreset.apiMode, authMode: 'api_key', language: 'system', autoGenerate: false, dataDirectory: join(root, 'data'), channel: 'stable', updateMode: 'notify', theme: defaultTheme, enhancedContent:true };
     if (existsSync(this.path)) {
       const stored = JSON.parse(readFileSync(this.path, 'utf8'));
       this.settings = settingsSchema.parse({ ...this.settings, ...stored, theme: resolveTheme(stored.theme) });

@@ -4,7 +4,7 @@
 
 理解、连接、记忆与迁移。输入概念生成 Markdown 解释，在解释中选择陌生内容继续展开，构建保存在本机的知识地图。
 
-最新测试版：[**1.0.0-beta.2 - Snow Leopard**](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.0.0-beta.2)，Electron + React + TypeScript。支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
+当前源码版本：**1.1.0-beta.1 发布候选**；公开下载以 [GitHub Releases](https://github.com/Leos-byte/MemoryGraph/releases) 实际发布状态为准。Electron + React + TypeScript，支持 Windows/Linux x64、中英文、OpenAI/DeepSeek、自定义 Prompt、API Key 和官方 Codex CLI 的 ChatGPT 登录。
 
 ## 下载与反馈
 
@@ -15,6 +15,8 @@
 基本学习功能无需账号或自建服务器；调用模型需要自己的 API Key，或已登录的 Codex CLI。GitHub 登录不提供模型额度。
 
 ## 开发与测试
+
+1.1.0-beta.1 增加富内容工作区：可视化 Markdown 编辑、公式/图表/交互组件、本地图片与确认式 Grok 生图、授权实时 JSON 数据、资源及离线网页导出。接口、安全边界与 schema-v2 数据回退方法见 [富内容说明](docs/rich_content.md)。旧 beta.2 安装包不包含这些功能。
 
 使用 Node.js 22 x64 与 npm。Linux 需要 GTK/NSS 等桌面运行库，详见 [发布说明](docs/electron_release.md)。
 

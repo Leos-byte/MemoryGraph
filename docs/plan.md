@@ -1,5 +1,23 @@
 # Project Plan
 
+## 2026-10-30 - Aero-Inspired Desktop Menus
+
+Status: Complete locally. Final typecheck/build, 141 unit tests, 56 release-tool tests, all 25 desktop scenarios and isolated preview package smoke passed. No version bump, publication or updater changes. Existing Releases cleanup work remains intact. Evidence: `test/desktop-menus-20261030.md`.
+
+- [x] Inspect shared React menus, command entry points, theme tokens and Windows 7 menu guidelines.
+- [x] Regroup File/Help and node actions; preserve direct settings/templates and contextual map commands.
+- [x] Add aligned icon/shortcut columns, theme-aware highlights, keyboard navigation and focus restoration.
+- [x] Pass four focused menu scenarios, 141 unit tests and 56 release-tool tests; inspect screenshots.
+- [x] Complete full desktop regression and final typecheck/build, record verification and provide a separate local preview under Source/dist-release (not Releases).
+
+## 2026-10-30 - Local Releases Retention
+
+Status: Complete at the owner's explicit request. Keep v1.0.0-beta.2, v1.0.0-beta.1 and v0.2.0-beta.4 unpacked apps/metadata; preserve Backup and remote releases. Evidence: `test/releases-cleanup-20261030.md`.
+
+- [x] Inventory local versions, temporary builds and possible runtime data before deletion.
+- [x] Remove only the 18 inventoried obsolete entries; keep the latest three versions and `.gitkeep`.
+- [x] Verify retained inventory, executable permissions and unchanged app.asar hashes; record the result.
+
 ## 1.0.0-beta.2 - Snow Leopard Publication
 
 Status: Complete. Public prerelease at `2026-10-29T18:05:44Z` (2026-10-30 Asia/Shanghai). PR #7, CI `40924484539`, immutable target `161f877fe7762752974b7856d4e78310b34763cc`, formal run `40925967111`: all required checks passed. Nine draft/public assets independently verified; prior releases/backups preserved. See `test/release-1.0.0-beta.2.md`.
@@ -210,3 +228,18 @@ Status: Implemented and x64 build verified
 ## Deprecated Decisions
 
 - The draw.io/Electron integration route is deprecated by user request and must not be continued unless explicitly reopened later.
+
+## 2026-11-02 Rich Content Workspace
+
+Status: Completed locally / 已完成。174 unit tests, all 30 desktop cases, 56 release-tool tests, typecheck/build and final isolated Linux package smoke passed. No publication or updater change. Evidence: `test/rich-content-20261102.md`.
+
+- [x] Inspect Electron/React, Markdown, SQLite, theme tokens and existing desktop menus.
+- [x] Add a bounded, declarative `memgraph-ui` protocol, formulas, diagrams and interactive charts/tables/forms.
+- [x] Add visual/source/preview editing while retaining unsupported Markdown as opaque blocks.
+- [x] Add local assets, explicit Grok image generation and separately authorized HTTPS JSON connectors.
+- [x] Add schema-v2 assets/state/cache and additive migration with pre-upgrade production backups.
+- [x] Add confirmed map-write actions and Markdown/assets/offline-interactive ZIP exports.
+- [x] Complete security, persistence, editor and offline export regressions; inspect both skins and narrow windows.
+- [x] Run complete verification, package an isolated preview, and document limits/manual gates.
+- [x] Owner subsequently requested publication; bump package/lockfile to 1.1.0-beta.1 and repeat local verification.
+- [ ] Merge reviewed PR after CI, tag the resulting main HEAD, run the signed Windows/Linux release workflow, verify draft assets, then publish the prerelease.

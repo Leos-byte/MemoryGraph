@@ -1,4 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
+import { languageFor } from './i18n';
+const ContentEditor = lazy(() => import('./content/ContentEditor').then(module => ({ default:module.ContentEditor })));
 import { Download, ExternalLink, Link2, RefreshCw, RotateCw, Save } from 'lucide-react';
 import type { NodeRecord } from '../shared/types';
 import type { WorkspaceUI } from './workspace';
@@ -15,16 +17,21 @@ export function TitleDialog({ title, initial = '', generate, t, onClose, onSubmi
   </form></Modal>;
 }
 
-export function EditNodeDialog({ node, run, t, onClose }: WorkspaceUI & { node: NodeRecord; onClose: () => void }) {
+export function EditNodeDialog({ node, run, t, onClose, snapshot }: WorkspaceUI & { node: NodeRecord; onClose: () => void }) {
   const [title, setTitle] = useState(node.title);
   const [markdown, setMarkdown] = useState(node.markdown);
   const [busy, setBusy] = useState(false);
   const [discard, setDiscard] = useState(false);
   const close = () => { if (busy) return; if (title !== node.title || markdown !== node.markdown) setDiscard(true); else onClose(); };
-  return <><Modal title={t('edit')} onClose={close} testId="edit-node-dialog" wide><form onSubmit={async event => { event.preventDefault(); setBusy(true); const result = await run('node.edit', { id: node.id, title: title.trim(), markdown }, t('saved')); setBusy(false); if (result.ok) onClose(); }}>
-    <div className="modal-body"><label className="field">{t('title')}<input required value={title} disabled={busy} onChange={event => setTitle(event.target.value)} /></label><label className="field">{t('markdown')}<textarea className="markdown-editor" rows={18} value={markdown} disabled={busy} onChange={event => setMarkdown(event.target.value)} spellCheck={false} /></label></div>
-    <footer className="dialog-actions"><button type="button" disabled={busy} onClick={close}>{t('cancel')}</button><button type="submit" disabled={busy || !title.trim()} className="primary">{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
-  </form></Modal>{discard && <ConfirmDialog t={t} title={t('unsaved')} message={t('discardWarning')} confirm={t('discard')} onConfirm={onClose} onClose={() => setDiscard(false)} />}</>;
+  return <><Modal title={t('edit')} onClose={close} testId="edit-node-dialog" wide>
+    <div className="modal-body"><label className="field">{t('title')}<input required value={title} disabled={busy} onChange={event => setTitle(event.target.value)} /></label><fieldset disabled={busy}><Suspense fallback={<Spinner/>}><ContentEditor value={markdown} onChange={setMarkdown} nodeId={node.id} language={languageFor(snapshot.settings.language)}/></Suspense></fieldset></div>
+    <footer className="dialog-actions"><button type="button" disabled={busy} onClick={close}>{t('cancel')}</button><button type="button" onClick={async()=>{setBusy(true);const result=await run('node.edit',{id:node.id,title:title.trim(),markdown},t('saved'));setBusy(false);if(result.ok)onClose();}} disabled={busy || !title.trim()} className="primary">{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
+  </Modal>{discard && <ConfirmDialog t={t} title={t('unsaved')} message={t('discardWarning')} confirm={t('discard')} onConfirm={onClose} onClose={() => setDiscard(false)} />}</>;
+}
+
+export function ExportDialog({mapId,run,t,onClose,snapshot}:WorkspaceUI & {mapId:string;onClose:()=>void}) {
+  const [format,setFormat]=useState('markdown'),[busy,setBusy]=useState(false),zh=languageFor(snapshot.settings.language)==='zh';
+  return <Modal title={t('export')} onClose={()=>{if(!busy)onClose();}} testId="export-dialog"><div className="modal-body"><label className="field">{zh?'格式':'Format'}<select value={format} onChange={event=>setFormat(event.target.value)}><option value="markdown">Markdown (.md)</option><option value="assets">{zh?'Markdown 与资源包 (.zip)':'Markdown and assets (.zip)'}</option><option value="interactive">{zh?'离线交互网页与 Markdown (.zip)':'Offline interactive site and Markdown (.zip)'}</option></select></label></div><footer className="dialog-actions"><button type="button" disabled={busy} onClick={onClose}>{t('cancel')}</button><button type="button" className="primary" disabled={busy} onClick={async()=>{setBusy(true);const result=format==='markdown'?await run('map.export',{id:mapId}):await run('content.export',{mapId,interactive:format==='interactive'});setBusy(false);if(result.ok)onClose();}}>{busy?<Spinner/>:<Download size={15}/>} {t('export')}</button></footer></Modal>;
 }
 
 export function RelationDialog({ snapshot, run, t, sourceId, update, canGenerate, onClose }: WorkspaceUI & { sourceId?: string; update: boolean; canGenerate: () => boolean; onClose: () => void }) {

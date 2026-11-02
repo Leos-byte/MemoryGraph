@@ -1,8 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { commands, type Bridge, type Command, type LoginState } from '../shared/types';
+import { commands, contentCommands, type Bridge, type Command, type LoginState } from '../shared/types';
 const api: Bridge = {
   invoke: <T>(command: Command, payload: Record<string, unknown> = {}) => {
-    if (!commands.includes(command)) return Promise.reject(new Error('Unknown command'));
+    if (!([...commands, ...contentCommands] as readonly string[]).includes(command)) return Promise.reject(new Error('Unknown command'));
     return ipcRenderer.invoke('memgraph:command', command, payload) as Promise<T>;
   },
   onChange: listener => { const fn = () => listener(); ipcRenderer.on('memgraph:changed', fn); return () => ipcRenderer.removeListener('memgraph:changed', fn); },
