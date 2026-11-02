@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { unzipSync, strFromU8 } from 'fflate';
@@ -117,7 +117,8 @@ describe('portable Markdown and offline export',()=>{
   it('exports assets and data snapshots without credentials and includes a read-only offline runtime',async()=>{
     const content=new ContentStore(store.db),asset=content.asset(nodeId,png,'image/png');
     const block={id:'chart',type:'chart',chart:'bar',x:'label',y:'n',data:[{label:'A',n:4}]};store.editNode(nodeId,'Rich',`![image](asset:${asset})\n\n\`\`\`memgraph-ui\n${raw([block])}\n\`\`\``);
-    const path=join(directory,'export.zip');await exportRich(store,'1',path,join(process.cwd(),'dist-offline'),true,'snow-leopard','en');
+    const viewer=join(directory,'viewer');mkdirSync(viewer);writeFileSync(join(viewer,'viewer.js'),'window.memgraphOffline=true');writeFileSync(join(viewer,'viewer.css'),'body{color:#252b2a}');
+    const path=join(directory,'export.zip');await exportRich(store,'1',path,viewer,true,'snow-leopard','en');
     const files=unzipSync(readFileSync(path));expect(files['viewer/viewer.js']).toBeDefined();expect(files[`assets/${asset}.png`]).toEqual(new Uint8Array(png));
     const markdown=strFromU8(files['content.md']);expect(markdown).toContain('assets/chart-1.svg');expect(markdown).toContain('| label | n |');expect(markdown).toContain('memgraph-ui');
     const html=strFromU8(files['index.html']);expect(html).toContain("connect-src 'none'");expect(html).not.toContain('apiKey');expect(html).toContain('snow-leopard');expect(strFromU8(files['source.md'])).toContain(`asset:${asset}`);
