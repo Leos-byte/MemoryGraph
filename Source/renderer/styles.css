@@ -49,8 +49,10 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: var(--text); font-size: 17px; font-weight: 650; white-space: nowrap; }
 .brand > svg { color: var(--accent); }
 .app-menu { display: flex; align-items: center; gap: 2px; }
-.app-menu > button { min-height: 31px; border: 0; background: transparent; padding: 5px 10px; color: var(--muted); font-size: 13px; white-space: nowrap; }
-.app-menu > button:hover:not(:disabled) { background: var(--accent-light); }
+.app-menu > button { min-height: 31px; border: 1px solid transparent; border-radius: 3px; background: transparent; padding: 5px 10px; color: var(--text); font-size: 13px; white-space: nowrap; }
+.app-menu > button > svg:not(.menu-chevron) { display: none; }
+.app-menu > button:hover:not(:disabled), .app-menu > button[aria-expanded='true'] { background: var(--accent-light); border-color: var(--line); }
+.app-menu > button[aria-expanded='true'] { border-color: var(--control-border); box-shadow: inset 0 1px 0 var(--surface); }
 .header-status { margin-left: auto; display: flex; align-items: center; gap: 7px; min-width: 0; }
 .version-tag { color: var(--text-subtle); font-size: 11px; white-space: nowrap; }
 .workbench { display: grid; grid-template-columns: 210px minmax(280px, 1fr) 350px; flex: 1; min-height: 0; position: relative; }
@@ -140,11 +142,19 @@ fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .error-banner > span { flex: 1; overflow-wrap: anywhere; }
 .error-banner button { min-height: 26px; font-size: 12px; }
 .maps-toggle, .details-toggle, .drawer-close, .drawer-scrim { display: none; }
-.menu { position: fixed; z-index: 250; padding: 5px; min-width: 200px; max-width: calc(100vw - 12px); max-height: calc(100dvh - 12px); overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow-menu); }
-.menu button { display: flex; width: 100%; min-height: 33px; border: 0; background: transparent; gap: 10px; justify-content: flex-start; text-align: left; font-size: 13px; padding: 7px 10px; border-radius: 3px; }
-.menu button:hover:not(:disabled), .menu button:focus-visible { background: var(--accent-light); outline: none; }
-.menu button.danger-text:hover:not(:disabled) { background: var(--danger-bg); }
-.menu-separator { border-top: 1px solid var(--line); margin: 4px; }
+.menu { position: fixed; z-index: 250; padding: 3px; min-width: 238px; width: max-content; max-width: calc(100vw - 12px); max-height: calc(100dvh - 12px); overflow-y: auto; border: 1px solid var(--control-border); border-radius: 4px; background: linear-gradient(to right, var(--background) 0 33px, var(--line) 33px 34px, var(--surface) 34px); box-shadow: var(--shadow-menu), inset 0 0 0 1px var(--surface); }
+.menu button { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; width: 100%; min-height: 32px; border: 1px solid transparent; color: var(--text); background: transparent; column-gap: 9px; text-align: left; font-size: var(--font-body); line-height: 1.45; padding: 5px 12px 5px 2px; border-radius: 3px; }
+.menu-icon { display: flex; align-items: center; justify-content: center; width: 24px; }
+.menu-label { overflow-wrap: anywhere; }
+.menu-shortcut { padding-left: 20px; color: var(--muted); font-size: var(--font-small); white-space: nowrap; }
+.menu button:hover:not(:disabled), .menu button:focus:not(:disabled) { background: linear-gradient(var(--surface), var(--accent-light)); border-color: var(--control-border); }
+.menu button:hover:not(:disabled) .menu-shortcut, .menu button:focus:not(:disabled) .menu-shortcut { color: var(--text-on-muted); }
+.menu button:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
+.menu button.danger-text { color: var(--danger); }
+.menu button.danger-text:hover:not(:disabled), .menu button.danger-text:focus:not(:disabled) { background: var(--danger-bg); border-color: var(--danger-border); }
+.menu button:disabled { opacity: 1; color: var(--muted); }
+.menu button:disabled .menu-icon { opacity: .5; }
+.menu-separator { border-top: 1px solid var(--line); margin: 4px 7px 4px 38px; }
 .modal-backdrop { position: fixed; z-index: 200; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center; padding: 28px; }
 .modal { width: 460px; max-width: 100%; max-height: calc(100dvh - 56px); display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow-modal); overflow: hidden; outline: none; }
 .modal-wide { width: 740px; }
@@ -265,7 +275,7 @@ button:active:not(:disabled) > svg { opacity: .75; }
 .field input, .field select, .field textarea { font-size: var(--font-body); }
 .template-help, .confirmation-copy { font-size: var(--font-body); line-height: 1.75; }
 .template-help code { color: var(--accent); }
-.modal, .menu, .graph-controls { border-radius: var(--radius-panel); }
+.modal, .graph-controls { border-radius: var(--radius-panel); }
 .modal-header, .dialog-actions { padding: var(--space-3) var(--space-6); }
 .statusbar { height: 30px; min-height: 30px; }
 .canvas-empty { white-space: normal; text-align: center; width: min(260px, 85%); }
@@ -304,6 +314,8 @@ button:active:not(:disabled) > svg { opacity: .75; }
   .app-menu { margin-left: auto; gap: 0; }
   .app-menu > button { padding: 5px 7px; gap: 3px; min-width: 30px; }
   .app-menu > button:not(:first-child) span { display: none; }
+  .app-menu > button > svg:not(.menu-chevron) { display: block; }
+  .app-menu > button:not(:first-child) .menu-chevron { display: none; }
   .header-status { display: none; }
   .modal-backdrop { padding: 12px; }
   .modal { max-height: calc(100dvh - 24px); }
@@ -324,6 +336,7 @@ button:active:not(:disabled) > svg { opacity: .75; }
   .template-editor { flex: 1; overflow: hidden; }
   .template-editor .panel-heading h3 { font-size: var(--font-body); }
   .app-menu > button, .icon-button, .template-editor .icon-button { width: auto; min-width: 40px; height: 40px; min-height: 40px; flex-basis: 40px; }
+  .menu button { min-height: 40px; }
   .app-header { gap: 4px; padding: 0 8px; }
   .modal-header, .dialog-actions { padding: var(--space-3); }
   .recycle-list li { flex-wrap: wrap; }

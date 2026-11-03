@@ -1,5 +1,11 @@
 # Conversation History
 
+## 2026-10-30 - Desktop Menu Design
+
+> 根据Aero / Windows 7 桌面范式菜单的设计美学，优化菜单布局和结构
+
+Scope: desktop-style grouping, icon gutter, compact highlights and keyboard behavior adapted to existing Calico/Snow Leopard tokens. Keep settings/templates direct and map actions contextual; group updates/feedback/about under Help. No updater implementation changes or publication requested.
+
 ## 2026-10-30 - Snow Leopard Publication
 
 > 继续直到发版
@@ -205,3 +211,29 @@ Continuation (verbatim):
 > 继续
 
 Outcome: v1.0.0-beta.1 published and the seven inventoried historical Backup source/program directories deleted after new backup/publication verification. Signing key, independent database backup, runtime data and GitHub history were preserved.
+
+## 2026-10-30 - Local Releases Cleanup
+
+> 删除/home/leo/codexproject/MemoryGraph/Releases 下的无用文件，只保留最近的三个版本
+
+Outcome: retained local v1.0.0-beta.2, v1.0.0-beta.1 and v0.2.0-beta.4 unpacked apps plus their GitHub metadata and `.gitkeep`. Deleted 18 explicitly inventoried older-version/development/build entries. Backup, user data and remote GitHub releases/tags were not changed. See `test/releases-cleanup-20261030.md`.
+
+## 2026-11-02 - Rich Content Implementation
+
+User requests (verbatim):
+
+> 优化内容输出能力和美感。Markdown + 富 UI 组件 + 动态数据 + 交互能力，使其支持富文本、图片、图表、交互组件的动态界面能力。
+
+Image-service answer (verbatim):
+
+> grok
+
+Execution and continuation (verbatim):
+
+> Implement the plan.
+
+> 继续
+
+Accepted scope: declarative dynamic UI, user-authorized public HTTPS JSON reads, previewed/confirmed map writes, visual/source editing, local/Grok images and assets/offline-interactive exports. Preserve Markdown/old workflows and themes. Do not release or alter updating in this task.
+
+Outcome: implemented locally with 174 unit tests, 30 desktop flows, 56 release-tool checks and final isolated Linux package smoke passing. Preview and rollback instructions are in `docs/rich_content.md`; evidence and remaining Windows/live-provider/build-tool gates are in `test/rich-content-20261102.md`. No real paid request, personal database migration, commit/push/release, updater change or historical release/backup deletion was performed.

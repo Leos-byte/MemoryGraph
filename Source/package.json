@@ -1,11 +1,14 @@
 {
   "name": "memgraph",
-  "version": "1.0.0-beta.2",
+  "version": "1.1.0-beta.1",
   "description": "MemGraph knowledge learning workspace",
   "author": "Leos-byte",
   "desktopName": "memgraph.desktop",
   "license": "MIT",
-  "engines": { "node": ">=22.12.0 <23", "npm": ">=10" },
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "npm": ">=10"
+  },
   "private": true,
   "type": "module",
   "main": "dist-main/main.cjs",
@@ -23,16 +26,39 @@
     "postinstall": "node node_modules/electron/install.js && electron-builder install-app-deps"
   },
   "dependencies": {
+    "@tiptap/core": "3.32.2",
+    "@tiptap/extension-image": "3.32.2",
+    "@tiptap/extension-table": "3.32.2",
+    "@tiptap/extension-task-item": "3.32.2",
+    "@tiptap/extension-task-list": "3.32.2",
+    "@tiptap/markdown": "3.32.2",
+    "@tiptap/react": "3.32.2",
+    "@tiptap/starter-kit": "3.32.2",
     "@xyflow/react": "12.12.0",
     "better-sqlite3": "13.0.3",
+    "dompurify": "3.4.17",
+    "echarts": "6.1.0",
     "electron-updater": "6.8.11",
+    "fflate": "0.8.3",
+    "file-type": "22.3.0",
+    "image-size": "2.0.4",
+    "ipaddr.js": "2.5.0",
+    "katex": "0.19.1",
     "lucide-react": "1.61.0",
+    "mermaid": "12.2.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-markdown": "10.1.0",
+    "rehype-katex": "7.0.1",
     "remark-gfm": "4.0.1",
+    "remark-math": "6.0.0",
+    "remark-parse": "11.0.0",
+    "unified": "11.0.5",
     "yaml": "2.9.1",
     "zod": "4.6.7"
+  },
+  "overrides": {
+    "katex": "$katex"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

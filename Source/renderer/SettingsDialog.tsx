@@ -7,6 +7,7 @@ import { ConfirmDialog, IconButton, Modal, Spinner } from './ui';
 import { isThemeId, themes, type ThemeId } from '../shared/themes';
 import { applyTheme } from './theme';
 import { languageFor } from './i18n';
+import { ContentSettings, type ContentSettingsHandle } from './content/ContentSettings';
 
 const draftSettings = ({ theme: _theme, ...draft }: Settings) => draft;
 
@@ -25,10 +26,12 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
   const [checkingLogin, setCheckingLogin] = useState(false);
   const [loginStatus, setLoginStatus] = useState('');
   const [discard, setDiscard] = useState(false);
-  const dirty = JSON.stringify(form) !== JSON.stringify(draftSettings(snapshot.settings)) || !!apiKey || clearKey;
+  const contentSettings = useRef<ContentSettingsHandle>(null);
+  const [contentDirty,setContentDirty] = useState(false), [contentBusy,setContentBusy] = useState(false);
+  const dirty = contentDirty || JSON.stringify(form) !== JSON.stringify(draftSettings(snapshot.settings)) || !!apiKey || clearKey;
   const loginBusy = loginStarting || login.status === 'running';
   const acceptLogin = (next: LoginState) => setLogin(current => next.revision >= current.revision ? next : current);
-  const close = () => { if (busy || themeLock.current) return; if (dirty) setDiscard(true); else onClose(); };
+  const close = () => { if (busy || contentBusy || themeLock.current) return; if (dirty) setDiscard(true); else onClose(); };
   useEffect(() => {
     let active = true;
     const receive = (next: LoginState) => { if (active) setLogin(current => next.revision >= current.revision ? next : current); };
@@ -57,13 +60,14 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
   try { originChanged = new URL(form.baseUrl).origin !== new URL(snapshot.settings.baseUrl).origin; } catch { /* URL validation is shown on save. */ }
 
   async function save() {
-    if (busy || themeLock.current) return;
+    if (busy || contentBusy || themeLock.current) return;
     try {
       const url = new URL(form.baseUrl);
       if (url.protocol !== 'https:') throw new Error();
       if (form.authMode === 'chatgpt_login' && (url.origin !== 'https://api.openai.com' || form.apiMode !== 'responses')) { notify(t('chatgptRequiresOpenAi'), 'error'); return; }
     } catch { notify(t('invalidUrl'), 'error'); return; }
     setBusy(true);
+    if (contentSettings.current && !await contentSettings.current.saveChanges()) { setBusy(false); return; }
     const result = await run('settings.save', { ...form, baseUrl: form.baseUrl.trim(), model: form.model.trim(), ...(apiKey.trim() && !clearKey ? { apiKey: apiKey.trim() } : {}), clearKey: clearKey || originChanged }, t('saved'));
     setBusy(false);
     if (result.ok) { setApiKey(''); onClose(); }
@@ -91,13 +95,15 @@ export function SettingsDialog({ snapshot, run, t, notify, onClose, onUpdates }:
         <label className="field">{t('language')}<select value={form.language} onChange={event => update('language', event.target.value as Settings['language'])}><option value="system">{t('system')}</option><option value="zh_CN">简体中文</option><option value="en_US">English</option></select></label>
         <label className="field">{t('skin')}<select value={pendingTheme ?? snapshot.settings.theme} aria-busy={pendingTheme !== null} onChange={event => void changeTheme(event.target.value)}>{themes.map(theme => <option key={theme.id} value={theme.id}>{theme.label[languageFor(snapshot.settings.language) === 'zh' ? 0 : 1]}</option>)}</select></label>
         <label className="check-field"><input type="checkbox" checked={form.autoGenerate} onChange={event => update('autoGenerate', event.target.checked)} />{t('autoGenerate')}</label>
+        <label className="check-field"><input type="checkbox" checked={form.enhancedContent !== false} onChange={event=>update('enhancedContent',event.target.checked)}/>{languageFor(snapshot.settings.language)==='zh'?'增强内容输出':'Enhanced content output'}</label>
         <label className="field">{t('directory')}<span className="input-action"><input readOnly value={form.dataDirectory} /><IconButton icon={FolderOpen} label={t('chooseDirectory')} onClick={async () => { const result = await run<string | null>('data.choose'); if (result.ok && result.value) update('dataDirectory', result.value); }} /></span></label>
+        <ContentSettings language={languageFor(snapshot.settings.language)} handleRef={contentSettings} onDirtyChange={setContentDirty} onBusyChange={setContentBusy}/>
         <h3 className="section-heading">{t('softwareUpdates')}</h3>
         <label className="field">{t('updateMode')}<select value={form.updateMode} onChange={event => update('updateMode', event.target.value as Settings['updateMode'])}><option value="manual">{t('updateManual')}</option><option value="notify">{t('updateNotify')}</option><option value="download">{t('updateAutoDownload')}</option></select></label>
         <label className="check-field"><input type="checkbox" checked={form.channel === 'beta'} onChange={event => update('channel', event.target.checked ? 'beta' : 'stable')} />{t('beta')}</label>
         <div className="button-row"><button type="button" disabled={dirty} onClick={onUpdates}><RefreshCw size={15} />{t('updates')}</button></div>
       </fieldset></div>
-      <footer className="dialog-actions"><button type="button" disabled={busy || pendingTheme !== null} onClick={close}>{t('cancel')}</button><button className="primary" type="submit" disabled={busy || pendingTheme !== null}>{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
+      <footer className="dialog-actions"><button type="button" disabled={busy || contentBusy || pendingTheme !== null} onClick={close}>{t('cancel')}</button><button className="primary" type="submit" disabled={busy || contentBusy || pendingTheme !== null}>{busy ? <Spinner /> : <Save size={15} />}{t('save')}</button></footer>
     </form>
   </Modal>{discard && <ConfirmDialog t={t} title={t('unsaved')} message={t('discardWarning')} confirm={t('discard')} onConfirm={onClose} onClose={() => setDiscard(false)} />}</>;
 }

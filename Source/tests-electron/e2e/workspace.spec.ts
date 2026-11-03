@@ -2,6 +2,7 @@ import { _electron as electron, expect, test, type ElectronApplication, type Pag
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
+import { unzipSync } from 'fflate';
 import type { Command, LoginState, NodeRecord, Snapshot, Trash, UpdateState } from '../../shared/types';
 
 let application: ElectronApplication;
@@ -13,8 +14,9 @@ async function invoke<T = any>(command: Command, payload: Record<string, unknown
 }
 
 // Exercise update controls without replacing an installed executable or accessing GitHub.
-async function mountUpdateRenderer(state: Partial<UpdateState>) {
+async function mountUpdateRenderer(state: Partial<UpdateState>, values: Partial<Snapshot> = {}) {
   const snapshot = await invoke<Snapshot>('snapshot');
+  Object.assign(snapshot, values);
   snapshot.updates = { ...snapshot.updates, supported: true, ...state };
   const preload = join(root, 'update-renderer-preload.cjs');
   writeFileSync(preload, `
@@ -73,6 +75,7 @@ process.on('SIGTERM', () => { clearInterval(timer); process.exit(0); });
   delete environment.ELECTRON_RUN_AS_NODE;
   application = await electron.launch({ args: [...(process.platform === 'linux' ? ['--no-sandbox', '--ozone-platform=headless'] : []), resolve('.')], env: environment });
   page = await application.firstWindow();
+  page.on('pageerror', error => console.error('Renderer error:', error.stack));
   await page.setViewportSize({ width: 1360, height: 800 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.bringToFront();
@@ -324,8 +327,8 @@ test('update policy and beta channel persist through the settings UI', async () 
 });
 
 test('manual update entry points show a usable release fallback for portable/development builds', async () => {
-  await page.getByRole('button', { name: 'File', exact: false }).first().click();
-  await page.getByTestId('file-menu').getByRole('menuitem', { name: 'Check for updates', exact: true }).click();
+  await page.getByRole('button', { name: 'Help', exact: true }).click();
+  await page.getByTestId('help-menu').getByRole('menuitem', { name: 'Check for updates', exact: true }).click();
   let dialog = page.getByTestId('updates-dialog');
   await expect(dialog.getByRole('status')).toHaveText('In-app updates are unavailable for this build. Download from GitHub');
   await expect(dialog.getByRole('button', { name: 'Download from GitHub', exact: true })).toBeVisible();
@@ -339,8 +342,8 @@ test('manual update entry points show a usable release fallback for portable/dev
   await expect(page.getByTestId('updates-dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await invoke('settings.save', { language: 'zh_CN' });
-  await page.getByRole('button', { name: '\u6587\u4ef6', exact: false }).first().click();
-  await page.getByTestId('file-menu').getByRole('menuitem', { name: '\u68c0\u67e5\u66f4\u65b0', exact: true }).click();
+  await page.getByRole('button', { name: '\u5e2e\u52a9', exact: true }).click();
+  await page.getByTestId('help-menu').getByRole('menuitem', { name: '\u68c0\u67e5\u66f4\u65b0', exact: true }).click();
   dialog = page.getByTestId('updates-dialog');
   await expect(dialog.getByRole('button', { name: '\u524d\u5f80 GitHub \u4e0b\u8f7d', exact: true })).toBeVisible();
   await page.setViewportSize({ width: 960, height: 640 });
@@ -369,8 +372,8 @@ test('renderer update controls show background progress, retain readiness and re
   await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
   expect((await invoke('snapshot')).testCalls).not.toContain('updates.install');
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
-  await page.getByRole('button', { name: 'File', exact: false }).first().click();
-  await page.getByTestId('file-menu').getByRole('menuitem', { name: 'Check for updates', exact: true }).click();
+  await page.getByRole('button', { name: 'Help', exact: true }).click();
+  await page.getByTestId('help-menu').getByRole('menuitem', { name: 'Check for updates', exact: true }).click();
   await expect(dialog.getByRole('status')).toHaveText('Update ready');
   await page.setViewportSize({ width: 1360, height: 800 });
   await page.screenshot({ path: 'test-results/update-ready-desktop.png' });
@@ -405,6 +408,8 @@ test('Calico computed colors meet contrast targets and graph arrows use the sele
   const parent = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Understanding', x: 0, y: 0 });
   await invoke('node.create', { mapId: map.id, title: 'Connection', parentId: parent.id, x: 270, y: 100 });
   await page.locator('.react-flow__node').first().click();
+  await expect(page.locator('.react-flow__edge-path').first()).toBeVisible();
+  await expect.poll(() => page.locator('marker polyline').count()).toBeGreaterThan(0);
   const results = await page.evaluate(() => {
     const style = getComputedStyle(document.documentElement);
     const color = (name: string) => { const e = document.createElement('span'); e.style.color = `var(--${name})`; document.body.append(e); const rgb = getComputedStyle(e).color; e.remove(); return rgb; };
@@ -585,10 +590,287 @@ test('Snow Leopard real component contrast, graph colors and responsive surfaces
   await page.screenshot({ path: 'test-results/snow-templates-mobile.png' });
   await page.keyboard.press('Escape');
   for (const item of ['Recycle bin', 'Check for updates']) {
-    await page.getByRole('button', { name: 'File', exact: false }).first().click();
-    await page.getByTestId('file-menu').getByRole('menuitem', { name: item, exact: true }).click();
+    await page.getByRole('button', { name: item === 'Recycle bin' ? 'File' : 'Help', exact: true }).click();
+    await page.getByTestId(item === 'Recycle bin' ? 'file-menu' : 'help-menu').getByRole('menuitem', { name: item, exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.screenshot({ path: `test-results/snow-${item === 'Recycle bin' ? 'recycle' : 'updates'}-mobile.png` });
     await page.keyboard.press('Escape');
   }
+});
+
+test('desktop menu groups preserve single command entry points and direct settings', async () => {
+  const file = page.getByRole('button', { name: 'File', exact: true });
+  const help = page.getByRole('button', { name: 'Help', exact: true });
+  await file.click();
+  await expect(file).toHaveAttribute('aria-expanded', 'true');
+  const fileMenu = page.getByTestId('file-menu');
+  expect(await fileMenu.getByRole('menuitem').evaluateAll(items => items.map(item => item.getAttribute('aria-label')))).toEqual(['New map', 'Import legacy database', 'Back up data', 'Restore backup', 'Recycle bin']);
+  await expect(fileMenu.getByRole('separator')).toHaveCount(2);
+  await expect(fileMenu.getByRole('menuitem', { name: 'New map', exact: true })).toContainText('Ctrl+N');
+  await page.screenshot({ path: 'test-results/desktop-menu-calico-file.png' });
+  await file.click();
+  await expect(fileMenu).toHaveCount(0);
+  await help.click();
+  const helpMenu = page.getByTestId('help-menu');
+  expect(await helpMenu.getByRole('menuitem').evaluateAll(items => items.map(item => item.getAttribute('aria-label')))).toEqual(['Check for updates', 'GitHub feedback', 'Email feedback', 'Copy feedback details', 'About']);
+  await expect(helpMenu.getByRole('separator')).toHaveCount(2);
+  await helpMenu.getByRole('menuitem', { name: 'About', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'About', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(help).toBeFocused();
+  await file.click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByTestId('settings-dialog')).toBeVisible();
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  const map = await invoke('map.create', { title: 'Menu structure' });
+  await expect(page.getByTestId('map-item')).toBeVisible();
+  await page.getByTestId('map-item').click({ button: 'right' });
+  expect(await page.getByTestId('map-menu').getByRole('menuitem').evaluateAll(items => items.map(item => item.getAttribute('aria-label')))).toEqual(['Rename', 'Export Markdown', 'Delete']);
+  await page.getByTestId('map-menu').getByRole('menuitem', { name: 'Rename', exact: true }).click();
+  await page.getByTestId('rename-map-dialog').getByLabel('Title', { exact: true }).fill('Renamed from menu');
+  await page.getByTestId('rename-map-dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  expect((await invoke<Snapshot>('snapshot')).maps.find(item => item.id === map.id)?.title).toBe('Renamed from menu');
+});
+
+test('desktop menus support keyboard navigation, type search, focus return and pointer switching', async () => {
+  const file = page.getByRole('button', { name: 'File', exact: true });
+  const help = page.getByRole('button', { name: 'Help', exact: true });
+  await page.keyboard.press('F10');
+  await expect(file).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  let menu = page.getByTestId('file-menu');
+  await expect(menu.getByRole('menuitem', { name: 'New map', exact: true })).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(menu.getByRole('menuitem', { name: 'Recycle bin', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'New map', exact: true })).toBeFocused();
+  await page.keyboard.press('b');
+  await expect(menu.getByRole('menuitem', { name: 'Back up data', exact: true })).toBeFocused();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Settings', exact: true })).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(help).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByTestId('help-menu').getByRole('menuitem', { name: 'About', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(help).toBeFocused();
+  await page.keyboard.press('Alt+f');
+  await expect(menu).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await expect(menu).toBeVisible();
+  await help.hover();
+  await expect(page.getByTestId('help-menu')).toBeVisible();
+  await expect(menu).toHaveCount(0);
+  await file.hover();
+  await expect(menu).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(menu).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Settings', exact: true })).toBeFocused();
+  await file.click();
+  await page.getByTestId('concept-input').click();
+  await expect(menu).toHaveCount(0);
+  await expect(page.getByTestId('concept-input')).toBeFocused();
+  await file.click();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(menu).toHaveCount(0);
+  await expect(file).toBeFocused();
+});
+
+test('node menus group actions, skip unavailable commands and preserve edit/delete confirmation', async () => {
+  const map = await invoke('map.create', { title: 'Node menus' });
+  const node = await invoke<NodeRecord>('node.create', { mapId: map.id, title: 'Encoding', markdown: '# Original' });
+  await page.getByTestId('graph-node-title').click();
+  await page.getByTestId('node-menu').click();
+  let menu = page.getByTestId('node-actions-menu');
+  expect(await menu.getByRole('menuitem').evaluateAll(items => items.map(item => item.getAttribute('aria-label')))).toEqual(['Edit', 'Copy', 'Regenerate', 'Connect nodes', 'Update relationship', 'Delete']);
+  await expect(menu.getByRole('separator')).toHaveCount(3);
+  await page.screenshot({ path: 'test-results/desktop-menu-calico-node.png' });
+  await menu.getByRole('menuitem', { name: 'Edit', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('node-menu')).toBeFocused();
+  await page.getByTestId('node-menu').click();
+  await menu.getByRole('menuitem', { name: 'Delete', exact: true }).click();
+  await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect((await invoke<Snapshot>('snapshot')).nodes.some(item => item.id === node.id)).toBe(true);
+  await mountUpdateRenderer({ status: 'idle' }, { busy: [node.id] });
+  await page.getByTestId('graph-node-title').click();
+  await page.getByTestId('node-menu').click();
+  menu = page.getByTestId('node-actions-menu');
+  await expect(menu.getByRole('menuitem', { name: 'Edit', exact: true })).toBeDisabled();
+  await expect(menu.getByRole('menuitem', { name: 'Regenerate', exact: true })).toBeDisabled();
+  await expect(menu.getByRole('menuitem', { name: 'Copy', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'Connect nodes', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'Delete', exact: true })).toBeFocused();
+});
+
+test('desktop menu surfaces fit both skins, languages, narrow windows and large text', async () => {
+  await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setMinimumSize(320, 480));
+  for (const theme of ['calico', 'snow-leopard']) {
+    for (const language of ['en_US', 'zh_CN']) {
+      await invoke('settings.save', { theme, language });
+      const zh = language === 'zh_CN';
+      for (const width of [1360, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        for (const kind of ['file', 'help'] as const) {
+          const label = kind === 'file' ? (zh ? '\u6587\u4ef6' : 'File') : (zh ? '\u5e2e\u52a9' : 'Help');
+          await page.getByRole('button', { name: label, exact: true }).click();
+          const menu = page.getByTestId(`${kind}-menu`);
+          await expect(menu).toBeVisible();
+          const box = (await menu.boundingBox())!;
+          expect(box.x).toBeGreaterThanOrEqual(0); expect(box.x + box.width).toBeLessThanOrEqual(width);
+          expect(box.y + box.height).toBeLessThanOrEqual(844);
+          const sizes = await menu.getByRole('menuitem').evaluateAll(items => items.map(item => ({ scroll: item.scrollWidth, width: item.clientWidth })));
+          for (const size of sizes) expect(size.scroll).toBeLessThanOrEqual(size.width);
+          const contrasts = await menu.evaluate(element => {
+            const color = (token: string) => { const el = document.createElement('span'); el.style.color = `var(--${token})`; element.append(el); const value = getComputedStyle(el).color; el.remove(); return value; };
+            const luminance = (value: string) => { const [r,g,b] = value.match(/[\d.]+/g)!.slice(0,3).map(Number).map(v => { v /= 255; return v <= .04045 ? v/12.92 : ((v+.055)/1.055)**2.4; }); return r*.2126+g*.7152+b*.0722; };
+            const backgrounds = [color('surface'), color('accent-light')].map(luminance);
+            return [...element.querySelectorAll('.menu-label, .menu-shortcut')].flatMap(el => { const foreground = luminance(getComputedStyle(el).color); return backgrounds.map(background => (Math.max(foreground, background)+.05)/(Math.min(foreground, background)+.05)); });
+          });
+          for (const contrast of contrasts) expect(contrast).toBeGreaterThanOrEqual(4.5);
+          await page.screenshot({ path: `test-results/desktop-menu-${theme}-${language}-${kind}-${width}.png` });
+          await page.keyboard.press('Escape');
+        }
+      }
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 640 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = '20px'; });
+  await page.getByRole('button', { name: '\u5e2e\u52a9', exact: true }).click();
+  await expect(page.getByTestId('help-menu').getByRole('menuitem', { name: '\u5173\u4e8e', exact: true })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/desktop-menu-snow-large-text.png' });
+});
+
+const uiMarkdown = (blocks:unknown[]) => '```memgraph-ui\n'+JSON.stringify({version:1,blocks},null,2)+'\n```';
+test('rich content renders charts, formulas and diagrams, links controls and persists state',async()=>{
+  const map=await invoke('map.create',{title:'Interactive knowledge'});
+  const node=await invoke<NodeRecord>('node.create',{mapId:map.id,title:'Learning dashboard'});
+  const rows=[{name:'Alpha',value:12},{name:'Beta',value:7},{name:'Gamma',value:20}];
+  const markdown='# Learning dashboard\n\nA readable explanation with **connections**.\n\n$$E=mc^2$$\n\n```mermaid\nflowchart LR\nA[Understand] --> B[Remember]\n```\n\n'+uiMarkdown([
+    {id:'filter',type:'input',title:'Filter concepts',state:'search',value:''},
+    {id:'summary',type:'metric',title:'Matching concepts',aggregate:'count',data:rows,filter:{field:'name',state:'search'}},
+    {id:'chart',type:'chart',title:'Learning progress',chart:'bar',data:rows,x:'name',y:'value',filter:{field:'name',state:'search'}},
+    {id:'table',type:'table',title:'Concept data',data:rows,filter:{field:'name',state:'search'}},
+    {id:'details',type:'details',title:'Why it matters',children:[{id:'explain',type:'markdown',text:'Connect new knowledge to existing knowledge.'}]}
+  ]);
+  await invoke('node.edit',{id:node.id,title:node.title,markdown});
+  await page.getByTestId('graph-node-title').click();
+  await page.getByRole('button',{name:'Expand reading',exact:true}).click();
+  await expect(page.locator('.katex')).toHaveCount(1);
+  await expect(page.locator('.content-diagram svg')).toBeVisible();
+  await expect(page.locator('.content-diagram')).toContainText('Understand');
+  const diagramColors=await page.locator('.content-diagram').evaluate(element=>{const luminance=(value:string)=>{const [r,g,b]=value.match(/[\d.]+/g)!.slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return r*.2126+g*.7152+b*.0722;};const text=luminance(getComputedStyle(element.querySelector('text')!).fill),background=luminance(getComputedStyle(element.querySelector('.node rect')!).fill);return (Math.max(text,background)+.05)/(Math.min(text,background)+.05);});
+  expect(diagramColors).toBeGreaterThanOrEqual(4.5);
+  const labelsFit=await page.locator('.content-diagram .node').evaluateAll(nodes=>nodes.every(node=>{const text=node.querySelector('text')!.getBoundingClientRect(),shape=node.querySelector('rect')!.getBoundingClientRect();return text.left>=shape.left-1 && text.right<=shape.right+1 && text.top>=shape.top-1 && text.bottom<=shape.bottom+1 && text.height<=32;}));
+  expect(labelsFit).toBe(true);
+  await expect(page.locator('.content-chart canvas')).toBeVisible();
+  expect(await page.locator('.content-chart canvas').evaluate((canvas:HTMLCanvasElement)=>{const pixels=canvas.getContext('2d')!.getImageData(0,0,canvas.width,canvas.height).data;return pixels.some((value,index)=>index%4===3&&value>0);})).toBe(true);
+  await page.getByLabel('Filter concepts',{exact:true}).fill('Alpha');
+  await expect(page.locator('[data-block-id=summary] strong')).toHaveText('1');
+  await expect(page.locator('[data-block-id=table] tbody tr')).toHaveCount(1);
+  await expect.poll(async()=>(await invoke<any>('content.state',{nodeId:node.id})).state.filter?.search).toBe('Alpha');
+  await page.getByText('Why it matters',{exact:true}).click();
+  await expect(page.getByText('Connect new knowledge to existing knowledge.',{exact:true})).toBeVisible();
+  await page.screenshot({path:'test-results/rich-content-calico-desktop.png'});
+  await invoke('settings.save',{theme:'snow-leopard',language:'zh_CN'});
+  await page.screenshot({path:'test-results/rich-content-snow-desktop.png'});
+  await application.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setMinimumSize(320,480));
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:'test-results/rich-content-snow-mobile.png'});
+  await page.setViewportSize({width:1360,height:800});
+  await page.reload();
+  await expect(page.getByTestId('concept-input')).toBeVisible();
+  await page.getByTestId('graph-node-title').click();
+  await expect(page.getByLabel('Filter concepts',{exact:true})).toHaveValue('Alpha');
+});
+
+test('visual and source editing preserve opaque Markdown, support local images and isolate invalid blocks',async()=>{
+  const map=await invoke('map.create',{title:'Rich editor'}), node=await invoke<NodeRecord>('node.create',{mapId:map.id,title:'Editable'});
+  const original='# Keep\n\n<!-- retain comment -->\n\n```unknown-widget\nnever delete this\n```\n\n$$x^2$$\n\n'+uiMarkdown([{id:'note',type:'callout',title:'Important',text:'Retain this component.'}]);
+  await invoke('node.edit',{id:node.id,title:node.title,markdown:original});
+  await page.getByTestId('graph-node-title').click();await page.getByTestId('node-menu').click();await page.getByRole('menuitem',{name:'Edit',exact:true}).click();
+  const dialog=page.getByTestId('edit-node-dialog');
+  await expect(dialog.getByRole('textbox',{name:'Visual content',exact:true})).toBeVisible();
+  await dialog.getByRole('tab',{name:'Markdown source',exact:true}).click();
+  await expect(dialog.getByLabel('Markdown content',{exact:true})).toHaveValue(original);
+  await dialog.getByRole('tab',{name:'Visual',exact:true}).click();
+  const visual=dialog.getByRole('textbox',{name:'Visual content',exact:true});await visual.locator('h1').click();await page.keyboard.press('Home');
+  await expect.poll(()=>visual.evaluate(()=>window.getSelection()?.anchorNode?.parentElement?.closest('h1')?.textContent)).toBe('Keep');
+  await page.keyboard.type('Edited ');
+  await dialog.getByRole('tab',{name:'Markdown source',exact:true}).click();
+  const edited=await dialog.getByLabel('Markdown content',{exact:true}).inputValue();
+  for(const retained of ['<!-- retain comment -->','never delete this','$$x^2$$','memgraph-ui','Retain this component.'])expect(edited).toContain(retained);
+  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ioAAAAASUVORK5CYII=','base64');
+  await dialog.locator('input[type=file]').setInputFiles({name:'example.png',mimeType:'image/png',buffer:png});
+  await expect(dialog.getByLabel('Markdown content',{exact:true})).toHaveValue(/asset:[a-f0-9]{64}/);
+  await page.screenshot({path:'test-results/rich-content-editor-source.png'});
+  await dialog.getByRole('button',{name:'Save',exact:true}).click();
+  await expect(page.getByTestId('markdown').locator('img.content-image')).toBeVisible();
+  const saved=(await invoke<Snapshot>('snapshot')).nodes.find(item=>item.id===node.id)!.markdown;expect(saved).toContain('Edited');expect(saved).toContain('never delete this');
+  await invoke('node.edit',{id:node.id,title:node.title,markdown:'# Before\n\n<script>window.PWNED=true</script>\n\n![blocked](https://example.com/tracking.png)\n\n'+uiMarkdown([{id:'bad',type:'script',code:'alert(1)'}])+'\n\n## After'});
+  await expect(page.getByTestId('markdown').getByRole('heading',{name:'After',exact:true})).toBeVisible();
+  await expect(page.getByTestId('markdown').locator('script, iframe, img')).toHaveCount(0);expect(await page.evaluate(()=>Object.hasOwn(window,'PWNED'))).toBe(false);
+  await expect(page.getByTestId('markdown').getByRole('alert')).toBeVisible();
+});
+
+test('rich map actions require a preview and confirmation before linking or changing a node',async()=>{
+  const map=await invoke('map.create',{title:'Action test'}),node=await invoke<NodeRecord>('node.create',{mapId:map.id,title:'Parent'});
+  await invoke('node.edit',{id:node.id,title:node.title,markdown:uiMarkdown([{id:'name',type:'input',title:'Child title',state:'title',value:'Transfer'},{id:'create',type:'button',title:'Create linked concept',action:{kind:'createChild',title:'{{state:title}}',markdown:'# New knowledge'}}])});
+  await page.getByTestId('graph-node-title').click();
+  await page.getByRole('button',{name:'Create linked concept',exact:true}).click();
+  await expect(page.getByRole('dialog',{name:'Action preview',exact:true})).toBeVisible();expect((await invoke<Snapshot>('snapshot')).nodes).toHaveLength(1);
+  await page.getByRole('dialog',{name:'Action preview',exact:true}).getByRole('button',{name:'Cancel',exact:true}).click();expect((await invoke<Snapshot>('snapshot')).nodes).toHaveLength(1);
+  await page.getByRole('button',{name:'Create linked concept',exact:true}).click();
+  await application.evaluate(({dialog})=>{dialog.showMessageBox=async()=>({response:1,checkboxChecked:false});});
+  await page.getByRole('button',{name:'Confirm changes',exact:true}).click();
+  await expect.poll(async()=>(await invoke<Snapshot>('snapshot')).nodes.length).toBe(2);expect((await invoke<Snapshot>('snapshot')).edges).toHaveLength(1);
+});
+
+test('rich export produces a standalone offline page with working local controls and no network',async()=>{
+  const map=await invoke('map.create',{title:'Offline knowledge'}),node=await invoke<NodeRecord>('node.create',{mapId:map.id,title:'Offline'});
+  await invoke('node.edit',{id:node.id,title:node.title,markdown:uiMarkdown([{id:'query',type:'input',title:'Search locally',state:'q',value:''},{id:'table',type:'table',data:[{name:'Alpha',value:1},{name:'Beta',value:2}],filter:{field:'name',state:'q'}},{id:'chart',type:'chart',title:'Chart',chart:'bar',x:'name',y:'value',data:[{name:'A',value:2}]},{id:'write',type:'button',title:'Update map',action:{kind:'append',markdown:'Unsafe offline action'}}])});
+  const output=join(root,'offline.zip');
+  await application.evaluate(({dialog},path)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:path});},output);
+  await page.getByRole('option',{name:'Offline knowledge',exact:true}).click({button:'right'});
+  await page.getByRole('menuitem',{name:'Export Markdown',exact:true}).click();
+  const exporting=page.getByTestId('export-dialog');await exporting.getByRole('combobox',{name:'Format',exact:true}).selectOption('interactive');await exporting.getByRole('button',{name:'Export Markdown',exact:true}).click();await expect(exporting).not.toBeVisible();
+  const {dirname}=await import('node:path');const folder=join(root,'offline');
+  for(const [name,bytes] of Object.entries(unzipSync(readFileSync(output)))){const path=join(folder,name);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,bytes);}
+  const opened=application.waitForEvent('window');
+  await application.evaluate(async({BrowserWindow},path)=>{const window=new BrowserWindow({width:1000,height:800,webPreferences:{sandbox:true,nodeIntegration:false,contextIsolation:true}});await window.loadFile(path);},join(folder,'index.html'));
+  const offline=await opened;await offline.setViewportSize({width:1000,height:800});const requests:string[]=[];offline.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url());});await offline.reload();
+  await expect(offline.getByLabel('Search locally',{exact:true})).toBeVisible();await offline.getByLabel('Search locally',{exact:true}).fill('Alpha');await expect(offline.locator('[data-block-id=table] tbody tr')).toHaveCount(1);
+  await expect(offline.locator('.content-chart canvas')).toBeVisible();await expect(offline.getByRole('button',{name:'Update map',exact:true})).toBeDisabled();
+  expect(await offline.evaluate(()=>typeof window.memgraph)).toBe('undefined');expect(requests).toEqual([]);
+  await offline.screenshot({path:'test-results/rich-content-offline.png'});await offline.close();
+});
+
+test('content settings share save and discard protection and keep credentials out of the renderer',async()=>{
+  await page.getByRole('button',{name:'Settings',exact:true}).click();
+  let dialog=page.getByTestId('settings-dialog');
+  await dialog.getByLabel('xAI API Key',{exact:true}).fill('TEST-IMAGE-SECRET');
+  await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+  await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+  await page.getByTestId('confirm-dialog').getByRole('button',{name:'Cancel',exact:true}).click();
+  await expect(dialog.getByLabel('xAI API Key',{exact:true})).toHaveValue('TEST-IMAGE-SECRET');
+  await dialog.getByRole('button',{name:'Save',exact:true}).click();
+  await expect(dialog).not.toBeVisible();
+  const profile=await invoke<any>('content.profile');expect(profile.hasImageKey).toBe(true);expect(JSON.stringify(profile)).not.toContain('TEST-IMAGE-SECRET');
+  await page.getByRole('button',{name:'Settings',exact:true}).click();dialog=page.getByTestId('settings-dialog');
+  await dialog.getByLabel('Clear image key',{exact:true}).check();
+  await dialog.getByRole('button',{name:'Add data source',exact:true}).click();
+  await dialog.getByLabel('Name',{exact:true}).fill('Approved data');await dialog.getByLabel('HTTPS GET URL',{exact:true}).fill('https://example.com/rows');
+  await application.evaluate(({dialog})=>{dialog.showMessageBox=async()=>({response:1,checkboxChecked:false});});
+  await page.screenshot({path:'test-results/rich-content-settings.png'});
+  await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).not.toBeVisible();
+  const next=await invoke<any>('content.profile');expect(next.hasImageKey).toBe(false);expect(next.sources[0].authorized).toBe(true);expect(next.sources[0].name).toBe('Approved data');
 });

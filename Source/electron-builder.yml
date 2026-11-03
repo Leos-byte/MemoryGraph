@@ -8,6 +8,7 @@ icon: assets/icon.png
 files:
   - dist-main/**
   - dist-renderer/**
+  - dist-offline/**
   - package.json
 extraResources:
   - update-public-key.pem

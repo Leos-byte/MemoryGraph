@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, realpathSync, renameSync, rmSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { ContentStore, contentSchema, validateContentSchema } from './content-store';
 import type { EdgeRecord, MapRecord, NodeRecord, TemplateRecord, Trash } from '../shared/types';
 
 export const defaultSystemPrompt = `You are MemGraph, a knowledge-learning assistant. Explain concepts for building a durable knowledge graph.
@@ -126,7 +127,7 @@ function restrictFiles(path: string): void {
 
 function checkDatabase(db: Database.Database, allowEmpty = false): boolean {
   const version = Number(db.pragma('user_version', { simple: true }));
-  if (version > 1 || version < 0) throw new Error(`Unsupported database version: ${version}`);
+  if (version > 2 || version < 0) throw new Error(`Unsupported database version: ${version}`);
   const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all() as { name: string }[];
   if (!tables.length && allowEmpty && version === 0) return true;
   for (const [table, names] of Object.entries(columns)) {
@@ -158,6 +159,10 @@ function checkDatabase(db: Database.Database, allowEmpty = false): boolean {
       }
     }
   }
+  if (version === 2) for (const table of ['content_assets','content_refs','content_state','content_sources','content_cache']) {
+    if (!tables.some(item => item.name === table)) throw new Error(`Incompatible rich-content database: ${table}`);
+  }
+  if (version === 2) validateContentSchema(db);
   const integrity = db.pragma('integrity_check') as { integrity_check: string }[];
   if (integrity.length !== 1 || integrity[0].integrity_check !== 'ok') throw new Error('Database integrity check failed.');
   if ((db.pragma('foreign_key_check') as unknown[]).length) throw new Error('Database foreign key check failed.');
@@ -199,7 +204,9 @@ export class Store {
             }
           }
         }
-        this.db.pragma('user_version = 1');
+        this.db.exec(contentSchema);
+        validateContentSchema(this.db);
+        this.db.pragma('user_version = 2');
         if (!this.db.prepare("SELECT id FROM templates WHERE deleted_at = '' LIMIT 1").get()) {
           this.saveTemplate({ name: 'Default Memory Explanation', system_prompt: defaultSystemPrompt, user_prompt: defaultUserPrompt, is_default: true });
         }
@@ -285,6 +292,7 @@ export class Store {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(idValue(args.mapId), args.title.trim(), args.markdown ?? '',
         args.templateId ? idValue(args.templateId) : null, x, y, args.status ?? 'ready', time, time);
       const node = this.node(String(result.lastInsertRowid));
+      new ContentStore(this.db).linkAssets(node.id,node.markdown);
       if (args.parentId) this.connect(args.parentId, node.id, 'explains', args.selectedText ?? '');
       return node;
     })();
@@ -292,8 +300,10 @@ export class Store {
 
   editNode(id: string, title: string, markdown: string): void {
     this.activeNode(id);
-    this.db.prepare('UPDATE nodes SET title = ?, markdown = ?, updated_at = ? WHERE id = ?')
-      .run(title.trim() || 'Untitled Node', markdown, now(), idValue(id));
+    this.db.transaction(() => {
+      this.db.prepare('UPDATE nodes SET title = ?, markdown = ?, updated_at = ? WHERE id = ?').run(title.trim() || 'Untitled Node', markdown, now(), idValue(id));
+      new ContentStore(this.db).linkAssets(id,markdown);
+    })();
   }
 
   moveNode(id: string, x: number, y: number): void {
@@ -310,7 +320,10 @@ export class Store {
 
   setMarkdown(id: string, markdown: string, status = 'ready'): void {
     this.activeNode(id);
-    this.db.prepare('UPDATE nodes SET markdown = ?, status = ?, updated_at = ? WHERE id = ?').run(markdown, status, now(), idValue(id));
+    this.db.transaction(() => {
+      this.db.prepare('UPDATE nodes SET markdown = ?, status = ?, updated_at = ? WHERE id = ?').run(markdown, status, now(), idValue(id));
+      new ContentStore(this.db).linkAssets(id,markdown);
+    })();
   }
 
   connect(sourceId: string, targetId: string, type = 'manual', label = ''): EdgeRecord {
@@ -400,6 +413,7 @@ export class Store {
       this.db.prepare("DELETE FROM nodes WHERE deleted_at <> ''").run();
       this.db.prepare("DELETE FROM maps WHERE deleted_at <> ''").run();
       this.db.prepare("DELETE FROM templates WHERE deleted_at <> ''").run();
+      this.db.prepare('DELETE FROM content_assets WHERE NOT EXISTS (SELECT 1 FROM content_refs WHERE asset_id=content_assets.id)').run();
     })();
   }
 

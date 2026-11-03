@@ -1,5 +1,19 @@
 # Version History
 
+## 1.1.0-beta.1 - Release Candidate - 2026-11-02
+
+- Add validated declarative Markdown components, math, strict diagrams, interactive charts/tables/forms and expanded reading.
+- Add visual/source/preview editing with opaque unsupported Markdown preservation, local image assets and explicit paid Grok jobs using a separate xAI key.
+- Add authorized public HTTPS JSON connectors, persistent control state/cache, guarded map-write actions and Markdown/assets/offline-site ZIP export.
+- Add transactional SQLite schema v2 and pre-upgrade snapshots; preserve original core tables, both skins and existing workflows. See `docs/rich_content.md` for rollback and security limits.
+- Version and lockfile bumped for a new prerelease. Publication and update behavior must be verified separately; previous releases and backups are preserved.
+
+## Desktop Menus Included In 1.1.0-beta.1
+
+- Adopt Aero/Windows 7 menu grouping, aligned icon/shortcut columns, restrained selection frames and compact corners using existing skin tokens.
+- Keep File focused on maps/data; move update checks, feedback and About into Help. Settings/Templates stay one-click; map rename/export/delete stay contextual, Recycle Bin stays only in File.
+- Group node actions and retain deletion confirmation. Add keyboard entry/navigation/search, focus restoration and bilingual/responsive menu regressions. No update-engine change.
+
 ## 1.0.0-beta.2 - 2026-10-30
 
 - Publish the additive Snow Leopard skin with immediate isolated theme persistence, startup seeding and safe stored-ID fallback; preserve Calico defaults/layout and existing workflows.

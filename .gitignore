@@ -30,6 +30,7 @@ Backup/*
 Source/node_modules/
 Source/dist-main/
 Source/dist-renderer/
+Source/dist-offline/
 Source/dist-release/
 Source/test-results/
 Source/playwright-report/

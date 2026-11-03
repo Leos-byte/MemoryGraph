@@ -10,8 +10,12 @@ import { apiGenerate, codexGenerate, runCodex } from './ai';
 import { feedbackText, feedbackUrl, renderTemplate, REPOSITORY, upsertRelation } from './core';
 import { Updates } from './updates';
 import { themeBackground, themeHtml } from '../shared/themes';
+import { ContentService } from './content-service';
+import { ContentStore } from './content-store';
+import { richPrompt } from '../shared/content';
+import { exportRich } from './content-export';
 import { LoginSession } from './login';
-import { commands, type Command, type Id, type Settings, type Snapshot } from '../shared/types';
+import { commands, contentCommands, type Command, type Id, type Settings, type Snapshot } from '../shared/types';
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'memgraph', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
 app.setName('MemGraph');
@@ -24,6 +28,7 @@ let window: BrowserWindow;
 let config: Config;
 let store: Store;
 let updates: Updates;
+let rich: ContentService;
 let generationSession = randomUUID();
 let key = '';
 let keyPersistent = false;
@@ -87,6 +92,7 @@ function generate(nodeId: Id, templateId?: unknown, relationTarget?: Id) {
     prompts = renderTemplate(template, { concept: node.title, parent_concept: parent?.title || '', selected_text: edge?.label || '', context_markdown: parent?.markdown || '', map_title: maps.find(map => map.id === node.map_id)?.title || '', language: chinese ? 'Chinese' : 'English' });
   }
   if (settings.authMode === 'api_key' && !key) throw new Error('Open Settings and enter an API key first.');
+  if (!relationTarget && settings.enhancedContent !== false) prompts[0] += `\n\n${richPrompt}`;
   const request = randomUUID(), currentSession = generationSession, abort = new AbortController();
   jobs.set(nodeId, { request, abort });
   store.recordGeneration(nodeId, settings.model, settings.apiMode, `SYSTEM:\n${prompts[0]}\n\nUSER:\n${prompts[1]}`, 'started');
@@ -108,16 +114,17 @@ function generate(nodeId: Id, templateId?: unknown, relationTarget?: Id) {
   }).catch(error => {
     if (!active()) return;
     const message = error instanceof Error ? error.message : String(error);
-    if (!relationTarget) store.setMarkdown(nodeId, `${node.markdown}\n\nGeneration failed: ${message}`, 'error');
+    if (!relationTarget) store.setMarkdown(nodeId, node.markdown, 'error');
     store.recordGeneration(nodeId, settings.model, settings.apiMode, '', 'error', message);
     if (window && !window.isDestroyed()) window.webContents.send('memgraph:generation-error', message);
   }).finally(() => { if (jobs.get(nodeId)?.request === request) jobs.delete(nodeId); changed(); });
 }
 async function changeDirectory(directory: string) {
   const old = config.settings.dataDirectory; if (resolve(old) === resolve(directory)) return;
-  await backup('before-directory-change'); cancelAll();
+  await backup('before-directory-change'); cancelAll(); await rich?.revokeSources();
   let next: Store | undefined;
   try {
+    await upgradeSnapshot(join(directory, 'memgraph.sqlite3'));
     next = new Store(join(directory, 'memgraph.sqlite3'));
     config.save({ ...config.settings, dataDirectory: directory });
     store.close(); store = next; selectedMap = null;
@@ -130,12 +137,12 @@ async function chooseAndImport(source?: string) {
   if (resolve(path) === resolve(destination)) throw new Error('Choose a different source database.');
   const importedSettings = path === legacy.database ? validateSettings({ ...config.settings, ...legacy.settings }) : undefined;
   if (!(await confirm('Import this database? Current data will be backed up; the source will remain unchanged. / 导入前备份当前数据，原数据库保持不变。'))) return false;
-  await backup('before-import'); cancelAll(); store.close();
+  await backup('before-import'); cancelAll(); await rich.revokeSources(); store.close();
   try {
     await importDatabase(path, destination);
     if (importedSettings) await applySettings(config, { ...importedSettings }, { changeDirectory, storeKey });
   }
-  finally { store = new Store(destination); recoverInterrupted(); selectedMap = null; updates.configure(config.settings); changed(); }
+  finally { await upgradeSnapshot(destination); store = new Store(destination); recoverInterrupted(); selectedMap = null; updates.configure(config.settings); changed(); }
   return true;
 }
 async function openExternal(url: string, mail = false) {
@@ -147,6 +154,33 @@ async function openExternal(url: string, mail = false) {
 async function handle(command: Command, p: Record<string, unknown>): Promise<unknown> {
   if (updates.state.status === 'installing' && command !== 'snapshot') throw new Error('An update is being installed. Please wait.');
   switch (command) {
+    case 'content.state': {
+      const nodeId = id(p.nodeId), content = new ContentStore(store.db); const cache: Record<string,unknown> = {};
+      for (const source of content.sources()) { const value = content.cache(nodeId, source.id); if (value) cache[source.id] = value; }
+      return { state: content.state(nodeId), cache };
+    }
+    case 'content.saveState': new ContentStore(store.db).saveState(id(p.nodeId), text(p.blockId,64), p.values); return;
+    case 'content.profile': return rich.profile();
+    case 'content.configure': return rich.configure(p);
+    case 'content.sourceSave': return rich.saveSource(p);
+    case 'content.sourceDelete': return rich.deleteSource(z.string().uuid().parse(p.id));
+    case 'content.query': return rich.query(id(p.nodeId), z.string().uuid().parse(p.sourceId), p.params ?? {});
+    case 'content.assetImport': return rich.importAsset(id(p.nodeId), p);
+    case 'content.imageStart': return rich.startImage(id(p.nodeId), p);
+    case 'content.imageJob': return rich.job(z.string().uuid().parse(p.id));
+    case 'content.imageCancel': return rich.cancelImage(z.string().uuid().parse(p.id));
+    case 'content.actionPreview': return rich.preview(id(p.nodeId), p.action, p.values ?? {});
+    case 'content.actionCommit': {
+      if (!await confirm('Apply this previewed change to your knowledge map? / 将预览中的更改应用到知识地图？')) return null;
+      const result = rich.commit(z.string().uuid().parse(p.token)); changed(); return result;
+    }
+    case 'content.export': {
+      const exportingStore=store;
+      const map = store.maps().find(item => item.id === id(p.mapId)); if (!map) throw new Error('Map unavailable.');
+      const result = await dialog.showSaveDialog(window, { defaultPath: `${map.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')}.zip`, filters: [{ name:'Content package', extensions:['zip'] }] });
+      if (exportingStore!==store) throw new Error('Data directory changed.');
+      if (result.filePath) await exportRich(exportingStore, map.id, result.filePath, resolve(__dirname, '..', 'dist-offline'), p.interactive === true, config.settings.theme, config.settings.language === 'zh_CN' || (config.settings.language === 'system' && app.getLocale().startsWith('zh')) ? 'zh':'en'); return;
+    }
     case 'snapshot': return snapshot(p.mapId);
     case 'map.create': { const map = store.createMap(nonempty(p.title)); selectedMap = map.id; changed(); return map; }
     case 'map.rename': store.renameMap(id(p.id), nonempty(p.title)); break;
@@ -227,6 +261,8 @@ async function start() {
   const renderer = resolve(__dirname, '..', 'dist-renderer');
   protocol.handle('memgraph', request => {
     const url = new URL(request.url);
+    const asset = /^\/assets\/([a-f0-9]{64})$/.exec(url.pathname);
+    if (url.hostname === 'app' && asset) { const value = new ContentStore(store.db).readAsset(asset[1]); return value ? new Response(new Uint8Array(value.bytes), { headers: { 'content-type': value.mime, 'x-content-type-options': 'nosniff', 'cache-control': 'no-store' } }) : new Response('Not found', { status:404 }); }
     const file = resolve(renderer, '.' + decodeURIComponent(url.pathname));
     if (url.hostname !== 'app' || !file.startsWith(renderer + sep)) return new Response('Forbidden', { status: 403 });
     if (file === join(renderer, 'index.html')) return new Response(themeHtml(readFileSync(file, 'utf8'), config.settings.theme), { headers: { 'content-type': 'text/html; charset=utf-8' } });
@@ -238,12 +274,14 @@ async function start() {
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, url) => { if (url !== 'memgraph://app/index.html') event.preventDefault(); });
   updates = new Updates(changed, async () => { cancelAll(); await backup('before-update'); });
+  rich = new ContentService(() => store, root, keyPersistent, () => window, nodeId => jobs.has(nodeId), changed);
+  await rich.credentials.load();
   ipcMain.handle('memgraph:command', async (event, rawCommand, rawPayload) => {
     if (event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame || event.senderFrame.url !== 'memgraph://app/index.html') throw new Error('Untrusted IPC sender.');
-    const command = z.enum(commands).parse(rawCommand);
+    const command = z.enum([...commands, ...contentCommands]).parse(rawCommand);
     const payload = z.record(z.string(), z.unknown()).parse(rawPayload);
     try { return await handle(command, payload); }
-    catch (error) { const message = error instanceof Error ? error.message : 'Operation failed.'; throw new Error(key ? message.replaceAll(key, '[redacted]') : message); }
+    catch (error) { const message = rich.credentials.redact(error instanceof Error ? error.message : 'Operation failed.'); throw new Error(key ? message.replaceAll(key, '[redacted]') : message); }
   });
   window.once('ready-to-show', () => window.show());
   await window.loadURL('memgraph://app/index.html');
@@ -254,5 +292,12 @@ else {
   app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
   app.whenReady().then(start).catch(error => { dialog.showErrorBox('MemGraph startup failed', `${String(error)}\nUser data: ${root}\nExisting snapshots remain in the data/backups directory.`); app.quit(); });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => { updates?.dispose(); cancelAll(); login.cancel(); store?.close(); });
+  app.on('before-quit', () => { updates?.dispose(); rich?.cancel(); cancelAll(); login.cancel(); store?.close(); });
+}
+
+async function upgradeSnapshot(path: string) {
+  if (!existsSync(path)) return;
+  const Database = (await import('better-sqlite3')).default, input = new Database(path, { readonly: true, fileMustExist: true });
+  try { if (Number(input.pragma('user_version', { simple: true })) < 2) { const directory = join(dirname(path), 'backups'); mkdirSync(directory, { recursive:true, mode:0o700 }); await input.backup(join(directory, `before-rich-upgrade-${Date.now()}-${randomUUID()}.sqlite3`)); } }
+  finally { input.close(); }
 }

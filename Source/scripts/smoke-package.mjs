@@ -1,7 +1,8 @@
 import { _electron as electron } from '@playwright/test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
+import { unzipSync } from 'fflate';
 const directory = mkdtempSync(join(tmpdir(), 'memgraph-package-'));
 const executablePath = process.argv[2] ? resolve(process.argv[2]) : resolve('dist-release', process.platform === 'win32' ? 'win-unpacked/MemGraph.exe' : 'linux-unpacked/memgraph');
 const environment = { ...process.env, APPIMAGE_EXTRACT_AND_RUN: '1' }; delete environment.ELECTRON_RUN_AS_NODE;
@@ -23,5 +24,27 @@ try {
   if (snapshot.nodes.length !== 2 || snapshot.edges.length !== 1) throw new Error('Packaged SQLite/graph workflow failed.');
   if (await page.evaluate(() => typeof window.require !== 'undefined')) throw new Error('Renderer has Node access.');
   await page.screenshot({ path: 'test-results/packaged-workspace.png' });
+  await page.evaluate(async () => {
+    const snapshot=await window.memgraph.invoke('snapshot'), node=snapshot.nodes.find(node=>node.title==='Memory');
+    const asset=await window.memgraph.invoke('content.assetImport',{nodeId:node.id,bytes:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ioAAAAASUVORK5CYII='});
+    const blocks=[{id:'filter',type:'input',title:'Filter concepts',state:'q',value:''},{id:'table',type:'table',filter:{field:'name',state:'q'},data:[{name:'Encoding',value:12},{name:'Retrieval',value:8}]},{id:'chart',type:'chart',title:'Practice (simulated)',chart:'bar',x:'name',y:'value',data:[{name:'Encoding',value:12},{name:'Retrieval',value:8}]}];
+    await window.memgraph.invoke('node.edit',{id:node.id,title:node.title,markdown:'# Memory\n\nUnderstand, connect, remember.\n\n$$E=mc^2$$\n\n```mermaid\nflowchart LR\nA[Understand] --> B[Remember]\n```\n\n```memgraph-ui\n'+JSON.stringify({version:1,blocks})+'\n```\n\n![Local image](asset:'+asset.assetId+')'});
+  });
+  await page.getByTestId('graph-node-title').filter({hasText:/^Memory$/}).click();
+  await page.getByRole('button',{name:'Expand reading',exact:true}).click();
+  await page.locator('.content-diagram svg').waitFor();await page.locator('.content-chart canvas').waitFor();await page.locator('.katex').waitFor();
+  await page.locator('.content-diagram text').first().waitFor();if(!(await page.locator('.content-diagram').textContent()).includes('Understand'))throw new Error('Packaged diagram labels missing.');
+  await page.getByLabel('Filter concepts',{exact:true}).fill('Encoding');
+  if(await page.locator('[data-block-id=table] tbody tr').count()!==1)throw new Error('Packaged interactive filter failed.');
+  if(!await page.locator('.content-chart canvas').evaluate(canvas=>canvas.width>0 && canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data.some((value,index)=>index%4===3 && value>0)))throw new Error('Packaged chart is blank.');
+  await page.getByTestId('markdown').evaluate(element=>{element.scrollTop=0;});
+  await page.screenshot({path:'test-results/packaged-rich-desktop.png'});
+  await page.getByTestId('node-menu').click();await page.getByRole('menuitem',{name:'Edit',exact:true}).click();
+  await page.getByRole('textbox',{name:'Visual content',exact:true}).waitFor();
+  await page.screenshot({path:'test-results/packaged-rich-editor.png'});
+  await page.getByTestId('edit-node-dialog').getByRole('button',{name:'Cancel',exact:true}).click();
+  const output=join(directory,'offline.zip');await app.evaluate(({dialog},path)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:path});},output);
+  await page.evaluate(()=>window.memgraph.invoke('content.export',{mapId:'1',interactive:true}));
+  const exported=unzipSync(readFileSync(output));if(!exported['index.html'] || !exported['viewer/viewer.js'] || !Object.keys(exported).some(name=>name.startsWith('assets/')))throw new Error('Packaged offline runtime/assets missing.');
   console.log(`Packaged ${snapshot.version} smoke passed (${snapshot.platform}; updates supported: ${snapshot.updates.supported}).`);
 } finally { await app?.close(); rmSync(directory, { recursive: true, force: true }); }
