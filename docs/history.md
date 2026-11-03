@@ -237,3 +237,9 @@ Execution and continuation (verbatim):
 Accepted scope: declarative dynamic UI, user-authorized public HTTPS JSON reads, previewed/confirmed map writes, visual/source editing, local/Grok images and assets/offline-interactive exports. Preserve Markdown/old workflows and themes. Do not release or alter updating in this task.
 
 Outcome: implemented locally with 174 unit tests, 30 desktop flows, 56 release-tool checks and final isolated Linux package smoke passing. Preview and rollback instructions are in `docs/rich_content.md`; evidence and remaining Windows/live-provider/build-tool gates are in `test/rich-content-20261102.md`. No real paid request, personal database migration, commit/push/release, updater change or historical release/backup deletion was performed.
+
+Follow-up owner request (verbatim):
+
+> 发版并同步上传github
+
+Outcome: published v1.1.0-beta.1 as a GitHub prerelease after PR #8, cross-platform CI, signed workflow, independent draft verification and public asset identity comparison. Updated local Releases to retain the latest three versions. See `test/release-1.1.0-beta.1.md`.

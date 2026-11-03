@@ -1,12 +1,12 @@
 # Version History
 
-## 1.1.0-beta.1 - Release Candidate - 2026-11-02
+## 1.1.0-beta.1 - 2026-11-03
 
 - Add validated declarative Markdown components, math, strict diagrams, interactive charts/tables/forms and expanded reading.
 - Add visual/source/preview editing with opaque unsupported Markdown preservation, local image assets and explicit paid Grok jobs using a separate xAI key.
 - Add authorized public HTTPS JSON connectors, persistent control state/cache, guarded map-write actions and Markdown/assets/offline-site ZIP export.
 - Add transactional SQLite schema v2 and pre-upgrade snapshots; preserve original core tables, both skins and existing workflows. See `docs/rich_content.md` for rollback and security limits.
-- Version and lockfile bumped for a new prerelease. Publication and update behavior must be verified separately; previous releases and backups are preserved.
+- Published [GitHub prerelease](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.1.0-beta.1) at `2026-11-03T07:38:28Z`. PR #8, final CI `41412528477`, merge/tag `102b5bd6a38d02afc0d6be924b342d539066b4f7`, release run `41596119535` passed. Signed draft/public asset identities matched. Existing update behavior is unchanged; see `test/release-1.1.0-beta.1.md` for manual gates.
 
 ## Desktop Menus Included In 1.1.0-beta.1
 

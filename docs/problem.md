@@ -1,5 +1,12 @@
 # Problem Log
 
+## 2026-11-03 - Release CI Clean-Workspace Fixture
+
+- Issue: PR #8 first CI run failed one offline-export unit test on both Linux and Windows, while the same test passed locally.
+- Cause: the test read `Source/dist-offline`, which happened to exist after a local build but is absent before the build step in clean CI. Product export code and real offline bundle generation were not the failure.
+- Attempts: first cross-platform run failed; create a minimal viewer fixture in the test's temporary directory; rerun all 174 local unit tests; second cross-platform CI run `41412528477` and formal release run `41596119535` passed on both platforms. No test was skipped or production security restriction removed. Total interactive time was not instrumented.
+- Prevention: tests before the build step must create their own fixtures. Keep a clean-checkout CI gate before tagging, and keep separate E2E/packaged smoke checks for actual generated viewer assets.
+
 ## 2026-11-02 - Rich Content Boundaries And Rendering
 
 - Editor mount: React StrictMode/lazy mounting exposed an already-destroyed render-time Tiptap instance (`commands` null). Use mount-time creation (`immediatelyRender:false`), retain the editor DOM across modes, and track the last synchronized source instead of resetting on serialized whitespace differences. Edit regressions explicitly position the caret in a heading before typing and check comments, unknown fences, formulas and components remain.

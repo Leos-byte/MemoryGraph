@@ -231,7 +231,7 @@ Status: Implemented and x64 build verified
 
 ## 2026-11-02 Rich Content Workspace
 
-Status: Completed locally / 已完成。174 unit tests, all 30 desktop cases, 56 release-tool tests, typecheck/build and final isolated Linux package smoke passed. No publication or updater change. Evidence: `test/rich-content-20261102.md`.
+Status: Published as v1.1.0-beta.1 / 已发布。174 unit tests, all 30 desktop cases, 56 release-tool tests, typecheck/build and isolated Linux package smoke passed locally and in cross-platform CI. Updater behavior unchanged. Evidence: `test/rich-content-20261102.md`, `test/release-1.1.0-beta.1.md`.
 
 - [x] Inspect Electron/React, Markdown, SQLite, theme tokens and existing desktop menus.
 - [x] Add a bounded, declarative `memgraph-ui` protocol, formulas, diagrams and interactive charts/tables/forms.
@@ -242,4 +242,4 @@ Status: Completed locally / 已完成。174 unit tests, all 30 desktop cases, 56
 - [x] Complete security, persistence, editor and offline export regressions; inspect both skins and narrow windows.
 - [x] Run complete verification, package an isolated preview, and document limits/manual gates.
 - [x] Owner subsequently requested publication; bump package/lockfile to 1.1.0-beta.1 and repeat local verification.
-- [ ] Merge reviewed PR after CI, tag the resulting main HEAD, run the signed Windows/Linux release workflow, verify draft assets, then publish the prerelease.
+- [x] Merge reviewed PR #8 after CI, tag the resulting main HEAD, run the signed Windows/Linux release workflow, verify draft assets, then publish the prerelease.

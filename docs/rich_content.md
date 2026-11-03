@@ -62,7 +62,7 @@
 - Tiptap Markdown 仍属于上游 Beta 能力；复杂自定义语法宜在源码模式编辑。原文块只提供标题/首组件数据源的轻量属性编辑，复杂结构继续编辑 JSON，不提供自由拖拽网页设计器。
 - 不支持 WebSocket、任意 SQL/脚本、外部 POST 写 API、局域网源、动态图像生成或任意算式引擎；图表最多绘制 2,000 点，表格每页 50 行。离线网页可在用户主动点击时打开普通外部链接，但不会自动请求它们。
 - 真实 xAI 账户计费/额度、任意第三方源及 Windows 实机尚需人工验收。自动测试使用隔离数据库及模拟传输，不读取个人密钥、不产生费用。
-- 1.1.0-beta.1 不改自动更新或既有用户数据。发布候选解压包位于 `Source/dist-release/release-1.1.0-beta.1/linux-unpacked/memgraph`；首次测试请显式使用独立 `--user-data-dir`。公开发布状态以 GitHub Releases 为准。
+- 1.1.0-beta.1 不改自动更新或既有用户数据。已发布版本见 [GitHub Releases](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.1.0-beta.1)；本地解压测试副本位于 `Releases/MemGraph-v1.1.0-beta.1-linux-x64-unpacked/memgraph`。首次测试请显式使用独立 `--user-data-dir`。
 
 ## 上游依据
 

@@ -1,5 +1,11 @@
 # Electron Migration Acceptance
 
+## 1.1.0-beta.1 Release Evidence
+
+Published [GitHub prerelease](https://github.com/Leos-byte/MemoryGraph/releases/tag/v1.1.0-beta.1) at `2026-11-03T07:38:28Z`, tag/target `102b5bd6a38d02afc0d6be924b342d539066b4f7`. PR #8 final CI `41412528477` and formal signed release `41596119535` passed Windows/Linux x64 tests, desktop flows, packaged smoke and all artifact gates. The nine published asset identities/digests matched the reviewed draft; Ed25519 manifest and updater metadata were independently checked. Runtime npm audit reported zero vulnerabilities. Local tagged source/compiled archives and an unpacked manual-test app are retained; see `../test/release-1.1.0-beta.1.md`.
+
+Still unchecked: real Windows 10/11 interaction and NSIS installation, AppImage/FUSE on target devices, real xAI billing/credential use, and an installed cross-version upgrade/rollback. Schema-v2 rollback requires the pre-upgrade snapshot, not opening the new database with beta.2. Portable ZIP/tar.gz updates still require manual replacement. Do not mark these as passed from CI alone.
+
 ## Current 1.0.0-beta.1 Evidence
 
 Public prerelease at `2026-10-29T12:54:56Z`, tag/target `ff0635e1abf9ad5122ab2ad5f434846fe1b44a18`. PR #6 CI `40833451157` and release `40875526528` passed Windows Server 2022 / Ubuntu 22.04 x64 tests, unpacked smoke, both package formats and signed-asset verification. Local baseline: 129 units, 17 desktop scenarios, 56 release-tool checks, typecheck/build and versioned unpacked smoke.
